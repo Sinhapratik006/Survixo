@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  .dark {
+    color-scheme: dark;
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-canvas text-slate-900 dark:bg-navy-900 dark:text-slate-100;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-cyan-400 ring-offset-2 ring-offset-white dark:ring-offset-navy-900;
+  }
+  ::selection {
+    @apply bg-brand-200 text-navy-900;
+  }
+  code,
+  kbd,
+  pre {
+    @apply font-mono;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  .card {
+    @apply rounded-xl border border-brand-100 bg-white shadow-card dark:border-navy-600 dark:bg-navy-800;
+  }
+  .text-muted {
+    @apply text-slate-500 dark:text-slate-400;
+  }
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.14em] text-brand-600 dark:text-brand-300;
+  }
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, rgba(21, 94, 239, 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(21, 94, 239, 0.06) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .prose-docs h2 {
+    @apply mb-3 mt-10 scroll-mt-24 text-xl font-semibold text-slate-900 dark:text-white;
+  }
+  .prose-docs h3 {
+    @apply mb-2 mt-6 scroll-mt-24 text-base font-semibold text-slate-900 dark:text-white;
+  }
+  .prose-docs p {
+    @apply mb-4 leading-7 text-slate-600 dark:text-slate-300;
+  }
+  .prose-docs ul {
+    @apply mb-4 list-disc space-y-1 pl-6 text-slate-600 dark:text-slate-300;
+  }
+  .prose-docs ol {
+    @apply mb-4 list-decimal space-y-1 pl-6 text-slate-600 dark:text-slate-300;
+  }
+  .prose-docs :not(pre) > code {
+    @apply rounded bg-brand-50 px-1.5 py-0.5 text-[0.85em] text-brand-800 dark:bg-navy-700 dark:text-brand-200;
+  }
+  .prose-docs table {
+    @apply mb-6 w-full text-left text-sm;
+  }
+  .prose-docs th {
+    @apply border-b border-brand-100 py-2 pr-4 font-semibold dark:border-navy-600;
+  }
+  .prose-docs td {
+    @apply border-b border-brand-50 py-2 pr-4 align-top text-slate-600 dark:border-navy-700 dark:text-slate-300;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

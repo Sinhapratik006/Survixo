@@ -1,0 +1,800 @@
+// Nexovra data model.
+// Money is stored as BigInt micro-USD (1 USD = 1_000_000 micros) to keep
+// per-token accounting exact. Token prices are stored as Int micro-USD per
+// one million tokens (e.g. $0.60 / 1M tokens = 600000).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────── Identity ───────────────────────────────
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  avatarUrl     String?
+  passwordHash  String?
+  emailVerified Boolean   @default(false)
+  role          UserRole  @default(USER)
+  theme         String    @default("system")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  accounts       OAuthAccount[]
+  sessions       Session[]
+  memberships    Membership[]
+  apiKeysCreated ApiKey[]         @relation("ApiKeyCreator")
+  favorites      Favorite[]
+  comparisons    SavedComparison[]
+  auditLogs      AuditLog[]
+  arenaSessions  ArenaSession[]
+}
+
+model OAuthAccount {
+  id                String   @id @default(cuid())
+  userId            String
+  provider          String
+  providerAccountId String
+  email             String?
+  createdAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id            String   @id @default(cuid())
+  userId        String
+  tokenHash     String   @unique
+  csrfTokenHash String
+  ip            String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+  lastSeenAt    DateTime @default(now())
+  expiresAt     DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ─────────────────────────── Organizations ───────────────────────────
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  DEVELOPER
+  BILLING
+  VIEWER
+}
+
+enum PromptRetention {
+  NONE
+  REDACTED_7D
+  REDACTED_30D
+}
+
+model Organization {
+  id                   String          @id @default(cuid())
+  name                 String
+  slug                 String          @unique
+  personal             Boolean         @default(false)
+  balanceMicros        BigInt          @default(0)
+  heldMicros           BigInt          @default(0)
+  sellerBalanceMicros  BigInt          @default(0)
+  promptRetention      PromptRetention @default(NONE)
+  requestLogRetentionDays Int          @default(90)
+  isDemo               Boolean         @default(false)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  members          Membership[]
+  projects         Project[]
+  apiKeys          ApiKey[]
+  endpoints        SellerEndpoint[]
+  offers           Offer[]
+  routingPolicies  RoutingPolicy[]
+  requests         InferenceRequest[]   @relation("BuyerRequests")
+  servedRequests   InferenceRequest[]   @relation("SellerRequests")
+  usageRecords     UsageRecord[]
+  transactions     BillingTransaction[]
+  budgets          Budget[]
+  payouts          Payout[]
+  webhookEndpoints WebhookEndpoint[]
+  notifications    Notification[]
+  auditLogs        AuditLog[]
+  arenaSessions    ArenaSession[]
+  benchmarkRuns    BenchmarkResult[]
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  orgId     String
+  userId    String
+  role      OrgRole
+  createdAt DateTime @default(now())
+
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, userId])
+  @@index([userId])
+}
+
+enum Environment {
+  DEVELOPMENT
+  STAGING
+  PRODUCTION
+}
+
+model Project {
+  id              String      @id @default(cuid())
+  orgId           String
+  name            String
+  environment     Environment @default(DEVELOPMENT)
+  routingPolicyId String?
+  createdAt       DateTime    @default(now())
+
+  org           Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  routingPolicy RoutingPolicy?     @relation(fields: [routingPolicyId], references: [id], onDelete: SetNull)
+  apiKeys       ApiKey[]
+  requests      InferenceRequest[]
+  budgets       Budget[]
+
+  @@unique([orgId, name])
+}
+
+model ApiKey {
+  id              String    @id @default(cuid())
+  orgId           String
+  projectId       String?
+  createdById     String?
+  name            String
+  prefix          String
+  last4           String
+  keyHash         String    @unique
+  spendLimitMicros BigInt?
+  spentMicros     BigInt    @default(0)
+  rpmLimit        Int?
+  expiresAt       DateTime?
+  revokedAt       DateTime?
+  lastUsedAt      DateTime?
+  rotatedFromId   String?
+  createdAt       DateTime  @default(now())
+
+  org       Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  project   Project?           @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdBy User?              @relation("ApiKeyCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  requests  InferenceRequest[]
+  usage     UsageRecord[]
+
+  @@index([orgId])
+}
+
+// ─────────────────────────── Model registry ───────────────────────────
+
+model Provider {
+  id            String   @id
+  name          String
+  website       String?
+  dataPolicyUrl String?
+  createdAt     DateTime @default(now())
+
+  models Model[]
+}
+
+model Model {
+  id                   String    @id
+  name                 String
+  providerId           String
+  description          String?
+  family               String?
+  contextWindow        Int?
+  maxOutputTokens      Int?
+  inputModalities      String[]
+  outputModalities     String[]
+  apiSupported         Boolean   @default(true)
+  baselineInputPrice   Int?
+  baselineOutputPrice  Int?
+  baselinePriceSource  String?
+  baselinePriceIsDemo  Boolean   @default(true)
+  isDemo               Boolean   @default(true)
+  aliases              String[]
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  provider     Provider           @relation(fields: [providerId], references: [id])
+  capabilities ModelCapability[]
+  offers       Offer[]
+  requests     InferenceRequest[]
+  usage        UsageRecord[]
+  favorites    Favorite[]
+  benchmarks   BenchmarkResult[]
+
+  @@index([providerId])
+}
+
+model ModelCapability {
+  id         String  @id @default(cuid())
+  modelId    String
+  capability String
+  // "declared" = taken from catalog/provider documentation, "verified" = tested by Nexovra.
+  status     String  @default("declared")
+  source     String?
+
+  model Model @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@unique([modelId, capability])
+  @@index([capability])
+}
+
+// ─────────────────────────── Seller supply ───────────────────────────
+
+enum EndpointStatus {
+  PENDING
+  VERIFIED
+  FAILED
+  DISABLED
+}
+
+model SellerEndpoint {
+  id               String         @id @default(cuid())
+  orgId            String
+  name             String
+  adapter          String
+  baseUrl          String
+  status           EndpointStatus @default(PENDING)
+  statusMessage    String?
+  discoveredModels String[]
+  config           Json?
+  lastVerifiedAt   DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  org         Organization        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  credential  ProviderCredential?
+  offers      Offer[]
+
+  @@index([orgId])
+}
+
+// Envelope-encrypted provider secret. Plaintext never touches this table.
+model ProviderCredential {
+  id          String   @id @default(cuid())
+  endpointId  String   @unique
+  ciphertext  String
+  iv          String
+  authTag     String
+  wrappedKey  String
+  keyVersion  Int      @default(1)
+  hint        String
+  createdAt   DateTime @default(now())
+  rotatedAt   DateTime?
+
+  endpoint SellerEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+}
+
+enum OfferStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  SUSPENDED
+  ARCHIVED
+}
+
+enum HealthStatus {
+  UNKNOWN
+  HEALTHY
+  UNHEALTHY
+}
+
+model Offer {
+  id                   String       @id @default(cuid())
+  sellerOrgId          String
+  endpointId           String
+  modelId              String
+  upstreamModel        String
+  inputPrice           Int
+  outputPrice          Int
+  status               OfferStatus  @default(DRAFT)
+  healthStatus         HealthStatus @default(UNKNOWN)
+  consecutiveFailures  Int          @default(0)
+  unhealthyUntil       DateTime?
+  lastFailureReason    String?
+  verifiedCapabilities String[]
+  validatedAt          DateTime?
+  validationError      String?
+  maxConcurrency       Int          @default(8)
+  rpmLimit             Int          @default(120)
+  timeoutMs            Int          @default(30000)
+  dailySpendCapMicros  BigInt?
+  isDemo               Boolean      @default(false)
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  sellerOrg    Organization        @relation(fields: [sellerOrgId], references: [id], onDelete: Cascade)
+  endpoint     SellerEndpoint      @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  model        Model               @relation(fields: [modelId], references: [id])
+  healthChecks OfferHealthCheck[]
+  priceHistory OfferPriceHistory[]
+  requests     InferenceRequest[]
+  attempts     RequestAttempt[]
+
+  @@index([modelId, status])
+  @@index([sellerOrgId])
+}
+
+model OfferHealthCheck {
+  id         String   @id @default(cuid())
+  offerId    String
+  kind       String
+  ok         Boolean
+  latencyMs  Int?
+  statusCode Int?
+  error      String?
+  checkedAt  DateTime @default(now())
+
+  offer Offer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@index([offerId, checkedAt])
+}
+
+model OfferPriceHistory {
+  id          String   @id @default(cuid())
+  offerId     String
+  modelId     String
+  inputPrice  Int
+  outputPrice Int
+  recordedAt  DateTime @default(now())
+
+  offer Offer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@index([modelId, recordedAt])
+}
+
+// ─────────────────────────── Routing ───────────────────────────
+
+enum RoutingMode {
+  LOWEST_COST
+  BALANCED
+  QUALITY_FIRST
+  PREFERRED_PROVIDER
+  CUSTOM
+}
+
+model RoutingPolicy {
+  id                 String      @id @default(cuid())
+  orgId              String
+  name               String
+  mode               RoutingMode @default(LOWEST_COST)
+  isDefault          Boolean     @default(false)
+  maxInputPrice      Int?
+  maxOutputPrice     Int?
+  minDiscountPct     Int?
+  maxLatencyMs       Int?
+  minReliability     Int?
+  minQualityScore    Float?
+  allowedProviders   String[]
+  blockedProviders   String[]
+  preferredSellers   String[]
+  allowDemoOffers    Boolean     @default(true)
+  maxRetries         Int         @default(2)
+  timeoutMs          Int         @default(30000)
+  weightPrice        Float       @default(0.5)
+  weightLatency      Float       @default(0.2)
+  weightQuality      Float       @default(0.2)
+  weightReliability  Float       @default(0.1)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  org      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  projects Project[]
+
+  @@index([orgId])
+}
+
+// ─────────────────────────── Requests & usage ───────────────────────────
+
+enum RequestStatus {
+  IN_PROGRESS
+  SUCCESS
+  FAILED
+  REJECTED
+}
+
+enum RequestSource {
+  API
+  PLAYGROUND
+  ARENA
+  BENCHMARK
+  SEED
+}
+
+model InferenceRequest {
+  id                 String        @id
+  orgId              String
+  apiKeyId           String?
+  userId             String?
+  projectId          String?
+  requestedModel     String
+  modelId            String?
+  offerId            String?
+  sellerOrgId        String?
+  routingMode        RoutingMode?
+  routingTrace       Json?
+  status             RequestStatus @default(IN_PROGRESS)
+  errorCode          String?
+  errorMessage       String?
+  httpStatus         Int?
+  stream             Boolean       @default(false)
+  inputTokens        Int           @default(0)
+  outputTokens       Int           @default(0)
+  usageEstimated     Boolean       @default(false)
+  holdMicros         BigInt        @default(0)
+  costMicros         BigInt        @default(0)
+  baselineCostMicros BigInt?
+  sellerEarningMicros BigInt       @default(0)
+  platformFeeMicros  BigInt        @default(0)
+  latencyMs          Int?
+  ttftMs             Int?
+  retryCount         Int           @default(0)
+  idempotencyKey     String?
+  taskId             String?
+  source             RequestSource @default(API)
+  isDemo             Boolean       @default(false)
+  payload            Json?
+  payloadExpiresAt   DateTime?
+  createdAt          DateTime      @default(now())
+  completedAt        DateTime?
+
+  org       Organization     @relation("BuyerRequests", fields: [orgId], references: [id], onDelete: Cascade)
+  sellerOrg Organization?    @relation("SellerRequests", fields: [sellerOrgId], references: [id], onDelete: SetNull)
+  apiKey    ApiKey?          @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  project   Project?         @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  model     Model?           @relation(fields: [modelId], references: [id], onDelete: SetNull)
+  offer     Offer?           @relation(fields: [offerId], references: [id], onDelete: SetNull)
+  attempts  RequestAttempt[]
+  arenaEntry ArenaEntry?
+
+  @@unique([orgId, idempotencyKey])
+  @@index([orgId, createdAt])
+  @@index([apiKeyId, createdAt])
+  @@index([offerId, createdAt])
+  @@index([sellerOrgId, createdAt])
+  @@index([orgId, taskId])
+  @@index([createdAt])
+}
+
+model RequestAttempt {
+  id         String   @id @default(cuid())
+  requestId  String
+  offerId    String
+  attempt    Int
+  ok         Boolean
+  latencyMs  Int
+  statusCode Int?
+  errorCode  String?
+  error      String?
+  createdAt  DateTime @default(now())
+
+  request InferenceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  offer   Offer            @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@index([offerId, createdAt])
+  @@index([requestId])
+}
+
+// Daily usage rollup, written in the same transaction as billing settlement.
+model UsageRecord {
+  id                 String   @id @default(cuid())
+  orgId              String
+  apiKeyId           String?
+  modelId            String
+  day                DateTime @db.Date
+  keyScope           String
+  requests           Int      @default(0)
+  failures           Int      @default(0)
+  inputTokens        BigInt   @default(0)
+  outputTokens       BigInt   @default(0)
+  costMicros         BigInt   @default(0)
+  baselineCostMicros BigInt   @default(0)
+
+  org    Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  apiKey ApiKey?      @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  model  Model        @relation(fields: [modelId], references: [id])
+
+  @@unique([orgId, keyScope, modelId, day])
+  @@index([orgId, day])
+}
+
+// ─────────────────────────── Billing ───────────────────────────
+
+enum TransactionType {
+  CREDIT_PURCHASE
+  DEMO_CREDIT
+  USAGE_DEBIT
+  SELLER_EARNING
+  PAYOUT
+  PAYOUT_REVERSAL
+  REFUND
+  ADJUSTMENT
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum LedgerAccount {
+  BUYER
+  SELLER
+}
+
+model BillingTransaction {
+  id                String            @id @default(cuid())
+  orgId             String
+  type              TransactionType
+  account           LedgerAccount     @default(BUYER)
+  status            TransactionStatus @default(COMPLETED)
+  amountMicros      BigInt
+  balanceAfterMicros BigInt?
+  requestId         String?
+  paymentRef        String?
+  payoutId          String?
+  description       String
+  createdAt         DateTime          @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([type, requestId])
+  @@unique([type, paymentRef])
+  @@index([orgId, createdAt])
+}
+
+model Budget {
+  id                 String   @id @default(cuid())
+  orgId              String
+  projectId          String?
+  scopeKey           String   @unique
+  dailyLimitMicros   BigInt?
+  monthlyLimitMicros BigInt?
+  maxPerRequestMicros BigInt?
+  maxPerTaskMicros   BigInt?
+  alertThresholds    Int[]    @default([50, 80, 100])
+  hardLimit          Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  org     Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  project Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  alerts  BudgetAlert[]
+}
+
+model BudgetAlert {
+  id        String   @id @default(cuid())
+  budgetId  String
+  period    String
+  threshold Int
+  createdAt DateTime @default(now())
+
+  budget Budget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@unique([budgetId, period, threshold])
+}
+
+enum PayoutStatus {
+  REQUESTED
+  PROCESSING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+model Payout {
+  id           String       @id @default(cuid())
+  orgId        String
+  amountMicros BigInt
+  status       PayoutStatus @default(REQUESTED)
+  destination  String?
+  externalRef  String?
+  note         String?
+  requestedById String?
+  createdAt    DateTime     @default(now())
+  processedAt  DateTime?
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, createdAt])
+}
+
+// ─────────────────────────── Webhooks & alerts ───────────────────────────
+
+model WebhookEndpoint {
+  id              String   @id @default(cuid())
+  orgId           String
+  url             String
+  description     String?
+  events          String[]
+  active          Boolean  @default(true)
+  secretCiphertext String
+  secretIv        String
+  secretAuthTag   String
+  secretWrappedKey String
+  secretKeyVersion Int     @default(1)
+  createdAt       DateTime @default(now())
+
+  org        Organization      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  deliveries WebhookDelivery[]
+
+  @@index([orgId])
+}
+
+enum DeliveryStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model WebhookDelivery {
+  id             String         @id @default(cuid())
+  endpointId     String
+  event          String
+  payload        Json
+  status         DeliveryStatus @default(PENDING)
+  attempts       Int            @default(0)
+  nextAttemptAt  DateTime       @default(now())
+  responseStatus Int?
+  lastError      String?
+  createdAt      DateTime       @default(now())
+  deliveredAt    DateTime?
+
+  endpoint WebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
+  @@index([endpointId, createdAt])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  orgId     String
+  type      String
+  severity  String    @default("info")
+  title     String
+  body      String
+  data      Json?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, createdAt])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  orgId       String?
+  actorUserId String?
+  action      String
+  targetType  String?
+  targetId    String?
+  ip          String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  actor User?         @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, createdAt])
+}
+
+// ─────────────────────────── Quality & evaluation ───────────────────────────
+
+model BenchmarkResult {
+  id                 String   @id @default(cuid())
+  modelId            String
+  offerId            String?
+  runByOrgId         String?
+  benchmark          String
+  version            String
+  datasetDescription String
+  method             String
+  sampleSize         Int
+  score              Float
+  scoreUnit          String
+  costMicros         BigInt
+  avgLatencyMs       Int
+  limitations        String
+  isPublic           Boolean  @default(false)
+  isDemo             Boolean  @default(false)
+  runAt              DateTime @default(now())
+
+  model Model         @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  org   Organization? @relation(fields: [runByOrgId], references: [id], onDelete: Cascade)
+
+  @@index([modelId, benchmark])
+}
+
+model ArenaSession {
+  id         String   @id @default(cuid())
+  orgId      String
+  userId     String
+  promptHash String
+  promptChars Int
+  criteria   String[]
+  createdAt  DateTime @default(now())
+
+  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries ArenaEntry[]
+}
+
+model ArenaEntry {
+  id        String  @id @default(cuid())
+  sessionId String
+  requestId String  @unique
+  modelId   String
+  rating    Int?
+  scores    Json?
+  notes     String?
+
+  session ArenaSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  request InferenceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+}
+
+model Favorite {
+  userId    String
+  modelId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  model Model @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@id([userId, modelId])
+}
+
+model SavedComparison {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  modelIds  String[]
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─────────────────────────── Status ───────────────────────────
+
+model Incident {
+  id         String    @id @default(cuid())
+  title      String
+  status     String
+  impact     String
+  body       String
+  startedAt  DateTime  @default(now())
+  resolvedAt DateTime?
+  updatedAt  DateTime  @updatedAt
+}
+
+model WorkerHeartbeat {
+  name      String   @id
+  lastRunAt DateTime
+  lastError String?
+}

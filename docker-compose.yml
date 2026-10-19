@@ -1,0 +1,50 @@
+# Local infrastructure for Nexovra.
+#   docker compose up -d postgres redis     # dependencies only (then `npm run dev`)
+#   docker compose --profile app up --build # full production-like stack
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: nexovra
+      POSTGRES_PASSWORD: nexovra
+      POSTGRES_DB: nexovra
+    ports:
+      - '5433:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U nexovra']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    profiles: ['app']
+    build: .
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://nexovra:nexovra@postgres:5432/nexovra
+      REDIS_URL: redis://redis:6379
+      APP_URL: http://localhost:8787
+      TRUST_PROXY: 'false'
+    ports:
+      - '8787:8787'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:
