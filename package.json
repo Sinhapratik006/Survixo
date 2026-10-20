@@ -12,7 +12,7 @@
     "dev:web": "next dev",
     "dev:server": "tsx watch --clear-screen=false server/src/index.ts",
     "build": "npm run build:web && npm run build:server",
-    "build:web": "tsc -p tsconfig.app.json --noEmit && next build",
+    "build:web": "next build",
     "build:server": "tsc -p server/tsconfig.json",
     "start": "node server/dist/index.js",
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p server/tsconfig.json --noEmit",
