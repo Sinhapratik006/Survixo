@@ -9,10 +9,10 @@
   },
   "scripts": {
     "dev": "concurrently -k -n api,web -c blue,cyan \"npm:dev:server\" \"npm:dev:web\"",
-    "dev:web": "vite",
+    "dev:web": "next dev",
     "dev:server": "tsx watch --clear-screen=false server/src/index.ts",
     "build": "npm run build:web && npm run build:server",
-    "build:web": "tsc -p tsconfig.app.json --noEmit && vite build",
+    "build:web": "tsc -p tsconfig.app.json --noEmit && next build",
     "build:server": "tsc -p server/tsconfig.json",
     "start": "node server/dist/index.js",
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p server/tsconfig.json --noEmit",
@@ -21,14 +21,14 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "prisma migrate reset --force",
     "ledger:reconcile": "tsx server/src/scripts/reconcile.ts",
     "test": "vitest run --project web --project server",
     "test:watch": "vitest --project web --project server",
     "test:integration": "vitest run --project integration",
     "test:all": "vitest run",
     "test:e2e": "playwright test",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "next:typecheck": "npx tsc -p tsconfig.app.json --noEmit && npx tsc -p server/tsconfig.json --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.2",
@@ -67,17 +67,16 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/supertest": "^7.2.1",
-    "@vitejs/plugin-react": "^5.2.0",
     "autoprefixer": "^10.6.1",
     "concurrently": "^9.2.5",
     "embedded-postgres": "^18.4.0-beta.17",
     "jsdom": "^26.1.0",
+    "next": "^15.0.0",
     "postcss": "^8.5.31",
     "supertest": "^7.3.1",
     "tailwindcss": "^3.4.19",
     "tsx": "^4.23.15",
     "typescript": "~5.9",
-    "vite": "^7.3.7",
     "vitest": "^3.2.7"
   }
 }

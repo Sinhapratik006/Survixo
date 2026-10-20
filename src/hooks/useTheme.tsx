@@ -1,3 +1,5 @@
+'use client';
+
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 
 type Theme = 'light' | 'dark' | 'system';
@@ -14,7 +16,7 @@ function systemPrefersDark() {
   return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches;
 }
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
+function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => (typeof localStorage !== 'undefined' ? (localStorage.getItem(KEY) as Theme | null) : null) ?? 'system');
   const [resolved, setResolved] = useState<'light' | 'dark'>('light');
 
