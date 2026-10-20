@@ -116,7 +116,7 @@ export async function createDemoSeller(opts: {
     },
   });
   await verifyEndpoint(endpoint.id);
-  const offers = [];
+  const offers: Awaited<ReturnType<typeof prisma.offer.create>>[] = [];
   for (const modelId of opts.models) {
     const offer = await prisma.offer.create({
       data: {

@@ -191,9 +191,10 @@ playgroundRouter.post(
   rateLimit({ name: 'benchmark', windowSeconds: 3600, max: 6, key: userKey }),
   async (req, res) => {
     const body = parse(benchSchema, req.body);
-    const results = [];
+    const results: Array<Awaited<ReturnType<typeof runArithmeticBenchmark>>> = [];
     for (const modelId of body.modelIds) {
-      results.push(await runArithmeticBenchmark({ orgId: req.org!.id, userId: req.auth!.user.id, modelId, isPublic: false }));
+      const r = await runArithmeticBenchmark({ orgId: req.org!.id, userId: req.auth!.user.id, modelId, isPublic: false });
+      results.push(r);
     }
     res.json({
       results: results.map((r) => (r.ok ? { ok: true, modelId: r.modelId, result: { ...r.result, costUsd: microsToUsd(r.result.costMicros), costMicros: undefined } } : r)),
