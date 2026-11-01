@@ -2,11 +2,13 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Button from './Button';
-import { Menu, X, Sun, Moon, Globe, DollarSign, BarChart3, Key, LogOut } from 'lucide-react';
+import { Menu, X, Sun, Moon, Globe, DollarSign, BarChart3, Key, ShieldCheck, LogOut } from 'lucide-react';
 import { api } from '../lib/api.js';
 
 const navLinks = [
-  { name: 'Marketplace', href: '/models', icon: Globe },
+  { name: 'Marketplace', href: '/marketplace', icon: Globe },
+  { name: 'Buyer', href: '/buyer/marketplace', icon: Key },
+  { name: 'Seller', href: '/seller/dashboard', icon: ShieldCheck },
   { name: 'Calculator', href: '/calculator', icon: DollarSign },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
 ];

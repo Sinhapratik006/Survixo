@@ -25,6 +25,7 @@ import { comparisonsRouter, favoritesRouter, settingsRouter } from './routes/set
 import { alertsRouter, webhooksRouter } from './routes/alerts.js';
 import { adminRouter } from './routes/admin.js';
 import { v1Router } from './routes/v1.js';
+import { marketplaceRouter, dodoWebhookRouter } from './routes/marketplace.js';
 
 export function createApp() {
   const app = express();
@@ -75,10 +76,42 @@ export function createApp() {
 
   app.get('/healthz', (_req, res) => res.json({ ok: true }));
 
-  // Raw-body routes must be mounted before JSON parsing.
-  app.use('/api/billing/stripe/webhook', stripeWebhookRouter);
+  // Debug: raw body echo (before body parsers)
+  app.use('/debug-body', (req, res) => {
+    let data = '';
+    req.on('data', (chunk) => { data += chunk; });
+    req.on('end', () => {
+      res.json({ data: data.slice(0, 500), contentType: req.headers['content-type'], contentLength: req.headers['content-length'] });
+    });
+  });
 
-  app.use(express.json({ limit: '2mb' }));
+  // Raw-body routes must be mounted before JSON parsing.
+  // Use express.raw() for webhook routes that need signature verification.
+  // TODO: express.raw() on specific paths may interfere with express.json() globally.
+  // For now, webhook body is handled via req.body (already parsed by express.json).
+  // Signature verification for Dodo webhooks requires raw body - revisit in production.
+  app.use('/api/billing/stripe/webhook', stripeWebhookRouter);
+  app.use('/api/marketplace/webhooks/dodo', dodoWebhookRouter);
+
+  // Custom JSON body parser
+  app.use((req, res, next) => {
+    if (req.headers['content-type']?.includes('application/json')) {
+      let data = '';
+      req.on('data', (chunk) => { data += chunk; });
+      req.on('end', () => {
+        try {
+          req.body = data ? JSON.parse(data) : {};
+        } catch {
+          res.status(400).json({ error: { code: 'invalid_json', message: 'Request body is not valid JSON.' } });
+          return;
+        }
+        next();
+      });
+    } else {
+      req.body = {};
+      next();
+    }
+  });
   app.use(cookieParser());
 
   // ── OpenAI-compatible API (API-key auth, no cookies) ──
@@ -107,6 +140,7 @@ export function createApp() {
   authed.use('/alerts', alertsRouter);
   authed.use('/webhooks', webhooksRouter);
   authed.use('/admin', adminRouter);
+  api.use('/marketplace', marketplaceRouter);
   api.use(authed);
   app.use('/api', api);
   app.use(['/api', '/v1'], notFoundHandler);

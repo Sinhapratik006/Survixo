@@ -20,25 +20,30 @@ globalThis.__BUILD_MANIFEST = {
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
+    "/analytics": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/analytics.js"
+    ],
+    "/buyer/marketplace": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/buyer/marketplace.js"
+    ],
     "/calculator": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
       "static/chunks/pages/calculator.js"
     ],
-    "/market/[id]": [
+    "/marketplace": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/market/[id].js"
+      "static/chunks/pages/marketplace.js"
     ],
-    "/models": [
+    "/seller/dashboard": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/models.js"
-    ],
-    "/signup": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/signup.js"
+      "static/chunks/pages/seller/dashboard.js"
     ]
   },
   "ampFirstPages": []

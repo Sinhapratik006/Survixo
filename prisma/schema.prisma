@@ -115,6 +115,9 @@ model Organization {
   transactions     BillingTransaction[]
   budgets          Budget[]
   payouts          Payout[]
+  listings         MarketplaceListing[]
+  orders           Order[]
+  cryptoPayout     CryptoPayoutAccount?
   webhookEndpoints WebhookEndpoint[]
   notifications    Notification[]
   auditLogs        AuditLog[]
@@ -621,6 +624,99 @@ model Payout {
   org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   @@index([orgId, createdAt])
+}
+
+// ─────────────────────────── Marketplace (Buy/Sell API Keys) ───────────────────────────
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  SOLD
+  ARCHIVED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PayoutNetwork {
+  ETHEREUM
+  SOLANA
+  BITCOIN
+  POLYGON
+  ARBITRUM
+}
+
+model MarketplaceListing {
+  id            String          @id @default(cuid())
+  sellerOrgId   String
+  title         String
+  description   String?
+  priceCents    Int             // Price in cents (USD), e.g. 500 = $5.00
+  currency      String          @default("usd")
+  apiKeyEncrypted String        // Envelope-encrypted seller API key
+  apiKeyPrefix   String?         // First 8 chars for buyer display
+  models         String[]        @default([])
+  status         ListingStatus @default(DRAFT)
+  isSold         Boolean         @default(false)
+  dodoProductId  String?
+  dodoPriceId    String?
+  maxBuyers      Int?            // null = unlimited
+  buyerCount     Int             @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  sellerOrg Organization @relation(fields: [sellerOrgId], references: [id], onDelete: Cascade)
+  orders    Order[]
+
+  @@index([sellerOrgId])
+  @@index([status])
+}
+
+model Order {
+  id                String       @id @default(cuid())
+  buyerOrgId        String
+  listingId         String
+  amountCents       Int          // Amount paid in cents
+  currency          String       @default("usd")
+  status            OrderStatus  @default(PENDING)
+  dodoCheckoutId    String?
+  dodoPaymentId     String?
+  dodoCustomerId    String?
+  apiKeyDelivered   String?      // Decrypted API key delivered to buyer after payment
+  apiKeyDeliveredAt DateTime?
+  cryptoTxHash      String?
+  platformFeeCents  Int          @default(0)
+  sellerEarningCents Int         @default(0)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  buyerOrg Organization @relation(fields: [buyerOrgId], references: [id], onDelete: Cascade)
+  listing  MarketplaceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([buyerOrgId])
+  @@index([listingId])
+  @@index([status])
+  @@unique([dodoCheckoutId])
+}
+
+model CryptoPayoutAccount {
+  id           String   @id @default(cuid())
+  orgId        String   @unique
+  walletAddress String
+  network      PayoutNetwork @default(ETHEREUM)
+  isVerified   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
 }
 
 // ─────────────────────────── Webhooks & alerts ───────────────────────────

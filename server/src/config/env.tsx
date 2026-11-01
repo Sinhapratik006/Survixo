@@ -53,6 +53,10 @@ const schema = z
     AUTH_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).max(10_000).default(10),
     RUN_WORKERS: bool(true),
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+
+    DODO_PAYMENTS_BASE_URL: z.string().url().default('https://test.dodopayments.com'),
+    DODO_PAYMENTS_API_KEY: z.string().optional(),
+    DODO_PAYMENTS_WEBHOOK_KEY: z.string().optional(),
   })
   .superRefine((v, ctx) => {
     if (v.NODE_ENV === 'production') {

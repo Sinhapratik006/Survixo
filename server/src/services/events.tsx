@@ -9,6 +9,8 @@ export const WEBHOOK_EVENTS = [
   'usage.unusual',
   'key.revoked',
   'payout.updated',
+  'listing.created',
+  'order.paid',
   'test.ping',
 ] as const;
 export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number];
