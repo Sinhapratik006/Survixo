@@ -1,6 +1,7 @@
 import express, { Router } from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import { pinoHttp } from 'pino-http';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -67,6 +68,10 @@ export function createApp() {
       crossOriginEmbedderPolicy: false,
     }),
   );
+
+  // Cross-origin access for the Next.js frontend (dev) and production SPA.
+  const corsOrigin = env.APP_URL.replace(/\/$/, '');
+  app.use(cors({ origin: corsOrigin, credentials: true }));
 
   app.get('/healthz', (_req, res) => res.json({ ok: true }));
 
