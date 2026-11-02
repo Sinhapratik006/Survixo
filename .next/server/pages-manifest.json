@@ -2,9 +2,12 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/buyer/marketplace": "pages/buyer/marketplace.js",
+  "/seller/create": "pages/seller/create.js",
   "/seller/dashboard": "pages/seller/dashboard.js",
+  "/": "pages/index.js",
   "/calculator": "pages/calculator.js",
+  "/login": "pages/login.js",
+  "/buyer/marketplace": "pages/buyer/marketplace.js",
   "/marketplace": "pages/marketplace.js",
   "/analytics": "pages/analytics.js"
 }

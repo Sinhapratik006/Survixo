@@ -59,7 +59,7 @@ export default function Navbar() {
               <span className="text-white font-bold text-sm">N</span>
               <div className="absolute inset-0 bg-white/10" />
             </div>
-            <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">Surplus Intelligence</span>
+            <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">Survixo</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8">

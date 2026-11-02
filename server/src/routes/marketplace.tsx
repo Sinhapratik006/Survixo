@@ -9,6 +9,7 @@
  *   DELETE /api/marketplace/listings/:id      - Archive a listing (seller)
  *   POST   /api/marketplace/checkout          - Create Dodo checkout session (buyer)
  *   GET    /api/marketplace/orders            - Buyer's orders (authenticated)
+ *   GET    /api/marketplace/orders/:id/api-key - Reveal purchased key (buyer, PAID only)
  *   GET    /api/marketplace/my-listings       - Seller's listings (authenticated)
  *   GET    /api/marketplace/payout-account    - Seller's crypto wallet (authenticated)
  *   POST   /api/marketplace/payout-account    - Set seller's crypto wallet (authenticated)
@@ -170,7 +171,7 @@ marketplaceRouter.use(requireOrg());
 const listingSchema = z.object({
   title: z.string().trim().min(1).max(120),
   description: z.string().trim().max(1000).optional(),
-  priceUsd: z.coerce.number().min(1).max(100_000),
+  priceUsd: z.coerce.number().min(0.01).max(100_000),
   apiKey: z.string().min(1).max(2000),
   models: z.array(z.string().min(1).max(200)).default([]),
   maxBuyers: z.coerce.number().int().min(1).max(10_000).optional(),
@@ -180,8 +181,9 @@ marketplaceRouter.post('/listings', requirePermission('seller:manage'), async (r
   const body = parse(listingSchema, req.body);
   const orgId = req.org!.id;
 
-  const encrypted = encryptSecret(body.apiKey, `listing:${orgId}`);
   const amountCents = Math.round(body.priceUsd * 100);
+  // Masked hint only — never expose more than the last 4 characters.
+  const apiKeyPrefix = body.apiKey.length > 8 ? `••••${body.apiKey.slice(-4)}` : '••••';
 
   let dodoProductId: string | undefined;
   let dodoPriceId: string | undefined;
@@ -200,22 +202,33 @@ marketplaceRouter.post('/listings', requirePermission('seller:manage'), async (r
     }
   }
 
-  const listing = await prisma.marketplaceListing.create({
-    data: {
-      sellerOrgId: orgId,
-      title: body.title,
-      description: body.description,
-      priceCents: amountCents,
-      currency: 'usd',
-      apiKeyEncrypted: JSON.stringify(encrypted),
-      apiKeyPrefix: body.apiKey.length > 8 ? `••••${body.apiKey.slice(-4)}` : '••••',
-      models: body.models,
-      status: 'ACTIVE',
-      maxBuyers: body.maxBuyers ?? null,
-      buyerCount: 0,
-      dodoProductId,
-      dodoPriceId,
-    },
+  // The listing id must exist before we can encrypt, because the encryption
+  // context (`listing:<id>`) is bound as AAD and is the same context the
+  // webhook uses when delivering the key to a paying buyer. Encrypting with
+  // any other context would make the key undecryptable at delivery time.
+  const listing = await prisma.$transaction(async (tx) => {
+    const created = await tx.marketplaceListing.create({
+      data: {
+        sellerOrgId: orgId,
+        title: body.title,
+        description: body.description,
+        priceCents: amountCents,
+        currency: 'usd',
+        apiKeyEncrypted: '',
+        apiKeyPrefix,
+        models: body.models,
+        status: 'ACTIVE',
+        maxBuyers: body.maxBuyers ?? null,
+        buyerCount: 0,
+        dodoProductId,
+        dodoPriceId,
+      },
+    });
+    const encrypted = encryptSecret(body.apiKey, `listing:${created.id}`);
+    return tx.marketplaceListing.update({
+      where: { id: created.id },
+      data: { apiKeyEncrypted: JSON.stringify(encrypted) },
+    });
   });
 
   if (dodoProductId && env.DODO_PAYMENTS_API_KEY) {
@@ -268,7 +281,7 @@ marketplaceRouter.post('/listings', requirePermission('seller:manage'), async (r
 const listingUpdateSchema = z.object({
   title: z.string().trim().min(1).max(120).optional(),
   description: z.string().trim().max(1000).optional(),
-  priceUsd: z.coerce.number().min(1).max(100_000).optional(),
+  priceUsd: z.coerce.number().min(0.01).max(100_000).optional(),
   apiKey: z.string().min(1).max(2000).optional(),
   models: z.array(z.string().min(1).max(200)).optional(),
   maxBuyers: z.coerce.number().int().min(1).max(10_000).nullish(),
@@ -410,6 +423,43 @@ marketplaceRouter.get('/orders', async (req, res) => {
       cryptoTxHash: o.cryptoTxHash,
       createdAt: o.createdAt,
     })),
+  });
+});
+
+// ───────────── Buyer: Reveal purchased API key (only after payment) ─────────────
+// The key is never returned by any public or listing endpoint. It is only
+// released here, to the buyer org that owns a PAID order.
+
+marketplaceRouter.get('/orders/:id/api-key', async (req, res) => {
+  const order = await prisma.order.findFirst({
+    where: { id: String(req.params.id), buyerOrgId: req.org!.id },
+    include: {
+      listing: {
+        select: {
+          id: true,
+          title: true,
+          apiKeyPrefix: true,
+          sellerOrg: { select: { name: true } },
+        },
+      },
+    },
+  });
+  if (!order) throw notFound('Order not found');
+  if (order.status !== 'PAID') {
+    throw badRequest('API key is only available after payment succeeds');
+  }
+  if (!order.apiKeyDelivered) {
+    throw badRequest('API key has not been delivered for this order yet');
+  }
+
+  res.json({
+    orderId: order.id,
+    listingId: order.listing.id,
+    listingTitle: order.listing.title,
+    seller: order.listing.sellerOrg.name,
+    apiKeyPrefix: order.listing.apiKeyPrefix,
+    apiKey: order.apiKeyDelivered,
+    deliveredAt: order.apiKeyDeliveredAt,
   });
 });
 

@@ -8,6 +8,7 @@ import Card from '../../components/Card';
 import Badge from '../../components/ui/badge';
 import { api, formatUsd, formatTokens, formatPct } from '../../lib/api.js';
 import { cn } from '../../components/lib/cn.js';
+import { Eye, EyeOff, Copy, Check, KeyRound, ShoppingBag } from 'lucide-react';
 
 export default function BuyerMarketplacePage() {
   const router = useRouter();
@@ -18,6 +19,13 @@ export default function BuyerMarketplacePage() {
   const [maxPrice, setMaxPrice] = useState(100000);
   const [sortBy, setSortBy] = useState('newest');
   const [cursor, setCursor] = useState(null);
+
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+  const [revealed, setRevealed] = useState({}); // orderId -> full key
+  const [busyOrder, setBusyOrder] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
+  const [buyBusy, setBuyBusy] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,9 +46,70 @@ export default function BuyerMarketplacePage() {
     })();
   }, [router.isReady, search, minPrice, maxPrice, sortBy, cursor]);
 
+  // Load the buyer's own purchases (keys are only revealed from here, after payment).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setOrdersLoading(true);
+      try {
+        const res = await api.get('/api/marketplace/orders');
+        if (!cancelled) setOrders(res.data.data || []);
+      } catch (e) {
+        // Not signed in / no org — just show nothing.
+        if (!cancelled) setOrders([]);
+      } finally {
+        if (!cancelled) setOrdersLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [router.isReady]);
+
   const handleBuy = async (listingId) => {
-    // Redirect to checkout or show checkout URL
-    window.location.href = '/api/marketplace/checkout?listingId=' + listingId;
+    setBuyBusy(listingId);
+    try {
+      const idempotencyKey =
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : 'idem-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+      const res = await api.post('/api/marketplace/checkout', { listingId, idempotencyKey });
+      const url = res.data?.checkoutUrl;
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (err) {
+      alert(err.message || 'Could not start checkout');
+      setBuyBusy(null);
+    }
+  };
+
+  // Reveals the full key for a PAID order. The server only returns it when the
+  // caller owns the order and its status is PAID.
+  const handleReveal = async (orderId) => {
+    if (revealed[orderId]) {
+      setRevealed((r) => { const n = { ...r }; delete n[orderId]; return n; });
+      return;
+    }
+    setBusyOrder(orderId);
+    try {
+      const res = await api.get(`/api/marketplace/orders/${orderId}/api-key`);
+      setRevealed((r) => ({ ...r, [orderId]: res.data.apiKey }));
+    } catch (err) {
+      alert(err.message || 'Could not reveal API key');
+    } finally {
+      setBusyOrder(null);
+    }
+  };
+
+  const handleCopy = async (orderId, value) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedId(orderId);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      /* clipboard unavailable */
+    }
   };
 
   return (
@@ -144,7 +213,7 @@ export default function BuyerMarketplacePage() {
                       ${formatUsd(key.priceUsd)} / 1M tokens
                     </span>
                     <Badge
-                      variant={key.status === 'active' ? 'default' : 'secondary'}
+                      variant={key.status === 'ACTIVE' ? 'default' : 'secondary'}
                       size="sm"
                     >
                       {key.status}
@@ -163,14 +232,88 @@ export default function BuyerMarketplacePage() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleBuy(key.id)}
-                      disabled={key.status !== 'active'}
+                      disabled={key.status !== 'ACTIVE' || buyBusy === key.id}
                     >
-                      Buy Now
+                      {buyBusy === key.id ? 'Redirecting…' : 'Buy Now'}
                     </Button>
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* ── My Purchases: the only place a full key is ever shown ── */}
+          <div className="mt-10 bg-white dark:bg-navy-800/50 rounded-xl p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-1">
+              <ShoppingBag className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">My Purchases</h2>
+            </div>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
+              Keys stay hidden until your payment succeeds. Reveal, then copy when you need it.
+            </p>
+
+            {ordersLoading ? (
+              <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">Loading your purchases…</div>
+            ) : orders.length === 0 ? (
+              <div className="py-8 text-center">
+                <KeyRound className="w-8 h-8 mx-auto text-slate-300 dark:text-navy-600 mb-2" />
+                <p className="text-sm text-slate-500 dark:text-slate-400">No purchases yet.</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-slate-200 dark:divide-navy-700">
+                {orders.map((o) => {
+                  const isPaid = o.status === 'PAID';
+                  const key = revealed[o.id];
+                  return (
+                    <li key={o.id} className="py-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{o.listingTitle}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            {formatUsd(o.amountUsd)} · {o.listingPrefix || '••••'} ·{' '}
+                            <span className={isPaid ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}>
+                              {o.status}
+                            </span>
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {isPaid ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleReveal(o.id)}
+                              disabled={busyOrder === o.id}
+                            >
+                              {busyOrder === o.id ? 'Revealing…' : key ? (
+                                <span className="flex items-center gap-1"><EyeOff className="w-3.5 h-3.5" /> Hide</span>
+                              ) : (
+                                <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> Reveal key</span>
+                              )}
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-slate-400 dark:text-slate-500">Available after payment</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {key && (
+                        <div className="mt-3 flex items-center gap-2 rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 p-3">
+                          <code className="flex-1 min-w-0 break-all font-mono text-xs text-emerald-900 dark:text-emerald-200">{key}</code>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(o.id, key)}
+                            className="shrink-0 inline-flex items-center gap-1 rounded-md border border-emerald-300 dark:border-emerald-500/40 px-2 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors"
+                          >
+                            {copiedId === o.id ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                            {copiedId === o.id ? 'Copied' : 'Copy'}
+                          </button>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
 
           {/* Pagination section would go here */}
