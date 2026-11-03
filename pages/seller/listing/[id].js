@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import {
   Menu, Sun, Moon, Eye, EyeOff, ShieldCheck, Info,
-  ArrowLeft, Pause, Play, Archive, KeyRound, Check, Loader2,
+  ArrowLeft, Pause, Play, Trash2, KeyRound, Check, Loader2,
 } from 'lucide-react';
 import Button from '../../../components/Button';
 import Input from '../../../components/Input';
@@ -42,7 +42,8 @@ export default function SellerListingManagePage() {
   // status actions
   const [statusBusy, setStatusBusy] = useState('');
   const [statusError, setStatusError] = useState('');
-  const [confirmArchive, setConfirmArchive] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteInfo, setDeleteInfo] = useState('');
 
   useEffect(() => {
     const prefersDark = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -178,16 +179,28 @@ export default function SellerListingManagePage() {
     }
   };
 
-  const handleArchive = async () => {
+  const handleDelete = async () => {
     setStatusError('');
-    setStatusBusy('ARCHIVED');
+    setDeleteInfo('');
+    setStatusBusy('DELETE');
     try {
-      await api.delete(`/api/marketplace/listings/${id}`);
-      setConfirmArchive(false);
+      const res = await api.delete(`/api/marketplace/listings/${id}`);
+      const d = res.data || {};
+      setConfirmDelete(false);
+      if (d.deleted) {
+        // Removed for real — nothing referenced it.
+        window.location.href = '/seller/dashboard';
+        return;
+      }
+      // Orders exist: archived instead so buyers keep their keys and payout
+      // records survive. It stays reachable here for its order history.
+      setDeleteInfo(
+        `This listing has ${d.orderCount} order${d.orderCount === 1 ? '' : 's'}, so it was archived instead of deleted. Buyers keep their purchased keys and your payout records are preserved.`,
+      );
       await load();
     } catch (err) {
-      setStatusError(err.message || 'Failed to archive listing');
-      setConfirmArchive(false);
+      setStatusError(err.message || 'Failed to delete listing');
+      setConfirmDelete(false);
     } finally {
       setStatusBusy('');
     }
@@ -327,28 +340,50 @@ export default function SellerListingManagePage() {
                     )}
                   </Button>
                 )}
-                {!isArchived && !confirmArchive && (
-                  <Button variant="outline" size="sm" onClick={() => setConfirmArchive(true)}>
-                    <Archive className="w-3.5 h-3.5" /> Archive
+                {!isArchived && !confirmDelete && (
+                  <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
+                    <Trash2 className="w-3.5 h-3.5" /> Delete listing
                   </Button>
                 )}
-                {confirmArchive && (
+                {confirmDelete && (
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       disabled={statusBusy !== ''}
-                      onClick={() => setConfirmArchive(false)}
+                      onClick={() => setConfirmDelete(false)}
                     >
                       Cancel
                     </Button>
-                    <Button size="sm" disabled={statusBusy !== ''} onClick={handleArchive}>
-                      {statusBusy === 'ARCHIVED' ? 'Archiving…' : 'Confirm archive'}
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      disabled={statusBusy !== ''}
+                      onClick={handleDelete}
+                    >
+                      {statusBusy === 'DELETE' ? 'Deleting…' : 'Yes, delete it'}
                     </Button>
                   </div>
                 )}
               </div>
             </div>
+
+            {confirmDelete && (
+              <div className="mt-4 rounded-xl border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-900/10 p-4 text-sm text-rose-800 dark:text-rose-300">
+                <p className="font-semibold mb-1">Delete “{listing.title}”?</p>
+                <p>
+                  If no one has bought it, it is removed permanently and disappears from your
+                  dashboard. If it already has orders, it will be archived instead — a listing with
+                  sales can’t be destroyed because buyers still hold their purchased keys.
+                </p>
+              </div>
+            )}
+
+            {deleteInfo && (
+              <div className="mt-4 rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/10 p-4 text-sm text-amber-800 dark:text-amber-300">
+                {deleteInfo}
+              </div>
+            )}
 
             {statusError && (
               <div className="mt-4 p-3 rounded-xl border border-rose-200 dark:border-rose-900/30 bg-rose-50 dark:bg-rose-900/10 text-sm text-rose-700 dark:text-rose-400">

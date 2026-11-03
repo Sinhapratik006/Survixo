@@ -343,28 +343,77 @@ marketplaceRouter.patch('/listings/:id', requirePermission('seller:manage'), asy
 marketplaceRouter.delete('/listings/:id', requirePermission('seller:manage'), async (req, res) => {
   const listing = await ownedListing(req, String(req.params.id));
 
-  const pendingOrders = await prisma.order.count({
-    where: { listingId: listing.id, status: 'PENDING' },
+  // Only a checkout the buyer is actively inside protects them. If we deleted
+  // the listing now, Dodo could still charge them and the webhook would then
+  // find no listing to decrypt a key from — they'd be paid-but-delivered-nothing.
+  //
+  // Failed attempts (no checkout id was ever handed to the buyer) and checkouts
+  // abandoned past the grace window must NOT block: nothing ever expires a
+  // PENDING order, so otherwise a single aborted attempt would make the listing
+  // permanently undeletable.
+  const CHECKOUT_GRACE_MS = 60 * 60 * 1000;
+  const inFlight = await prisma.order.count({
+    where: {
+      listingId: listing.id,
+      status: 'PENDING',
+      dodoCheckoutId: { not: null },
+      createdAt: { gte: new Date(Date.now() - CHECKOUT_GRACE_MS) },
+    },
   });
-  if (pendingOrders > 0) {
-    throw badRequest('Cannot archive listing with pending orders', undefined, 'pending_orders');
+  if (inFlight > 0) {
+    throw badRequest(
+      'A buyer is part-way through checkout on this listing. Give it a few minutes to complete or expire, then try again.',
+      undefined,
+      'pending_orders',
+    );
   }
 
-  await prisma.marketplaceListing.update({
-    where: { id: listing.id },
-    data: { status: 'ARCHIVED', isSold: true },
+  // Everything else still PENDING is abandoned or was a failed attempt. Cancel
+  // it explicitly rather than letting the FK cascade quietly remove the row
+  // while Dodo could still charge against it.
+  await prisma.order.updateMany({
+    where: { listingId: listing.id, status: 'PENDING' },
+    data: { status: 'CANCELLED' },
   });
+
+  // Only real money survives as a reason to keep the row: buyers hold delivered
+  // keys and the payout/fee records must stay. Cancelled/failed attempts don't.
+  const paidOrders = await prisma.order.count({
+    where: { listingId: listing.id, status: { in: ['PAID', 'REFUNDED'] } },
+  });
+
+  if (paidOrders > 0) {
+    await prisma.marketplaceListing.update({
+      where: { id: listing.id },
+      data: { status: 'ARCHIVED', isSold: true },
+    });
+
+    await audit({
+      orgId: req.org!.id,
+      actorUserId: req.auth!.user.id,
+      action: 'marketplace.listing.archived',
+      targetType: 'listing',
+      targetId: listing.id,
+      ip: clientIp(req),
+      metadata: { orderCount: paidOrders },
+    });
+
+    return res.json({ ok: true, deleted: false, archived: true, orderCount: paidOrders });
+  }
+
+  // No paid orders — remove it for real so it leaves the dashboard.
+  await prisma.marketplaceListing.delete({ where: { id: listing.id } });
 
   await audit({
     orgId: req.org!.id,
     actorUserId: req.auth!.user.id,
-    action: 'marketplace.listing.archived',
+    action: 'marketplace.listing.deleted',
     targetType: 'listing',
     targetId: listing.id,
     ip: clientIp(req),
   });
 
-  res.json({ ok: true });
+  res.json({ ok: true, deleted: true, archived: false, orderCount: 0 });
 });
 
 // ───────────── Buyer: Checkout ─────────────

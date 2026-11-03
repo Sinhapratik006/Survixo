@@ -4,6 +4,7 @@ import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Badge from '../../components/ui/badge';
+import { Trash2 } from 'lucide-react';
 import { cn } from '../../components/lib/cn.js';
 import { api, formatUsd } from '../../lib/api.js';
 
@@ -12,6 +13,9 @@ export default function SellerDashboard() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [confirmDeleteId, setConfirmDeleteId] = useState('');
+  const [deletingId, setDeletingId] = useState('');
+  const [deleteMsg, setDeleteMsg] = useState('');
 
   // Require a session — signed-out visitors go to /login and come back here,
   // instead of seeing an empty dashboard.
@@ -60,6 +64,34 @@ export default function SellerDashboard() {
     e.preventDefault();
     // Navigate to create listing page or show create dialog
     window.location.href = '/seller/create';
+  };
+
+  // A listing with no orders is removed for real. One with orders can't be
+  // destroyed (buyers hold delivered keys, payout records must survive), so
+  // the API archives it instead and we say so.
+  const handleDelete = async (listing) => {
+    setDeletingId(listing.id);
+    setDeleteMsg('');
+    try {
+      const res = await api.delete(`/api/marketplace/listings/${listing.id}`);
+      const d = res.data || {};
+      if (d.deleted) {
+        setListings((prev) => prev.filter((l) => l.id !== listing.id));
+        setDeleteMsg(`“${listing.title}” was deleted.`);
+      } else {
+        setListings((prev) =>
+          prev.map((l) => (l.id === listing.id ? { ...l, status: 'ARCHIVED' } : l)),
+        );
+        setDeleteMsg(
+          `“${listing.title}” has ${d.orderCount} order${d.orderCount === 1 ? '' : 's'}, so it was archived instead of deleted.`,
+        );
+      }
+    } catch (e) {
+      setDeleteMsg(e.message || 'Failed to delete this listing.');
+    } finally {
+      setDeletingId('');
+      setConfirmDeleteId('');
+    }
   };
 
   if (checkingAuth) {
@@ -119,7 +151,13 @@ export default function SellerDashboard() {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <>
+              {deleteMsg && (
+                <div className="mb-4 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800/50 p-3 text-sm text-slate-700 dark:text-slate-300">
+                  {deleteMsg}
+                </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {listings.map((listing) => (
                 <div
                   key={listing.id}
@@ -144,24 +182,55 @@ export default function SellerDashboard() {
                       </Badge>
                     </div>
                   </div>
-                  <div className="p-3 border-t border-slate-200 dark:border-navy-700">
+                  <div className="p-3 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between gap-2">
                     <a
                       href={`/seller/listing/${listing.id}`}
                       className="text-sm text-brand-600 dark:text-brand-400 hover:underline transition-colors"
                     >
                       View Details
                     </a>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => { window.location.href = `/seller/listing/${listing.id}`; }}
-                    >
-                      Manage
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { window.location.href = `/seller/listing/${listing.id}`; }}
+                      >
+                        Manage
+                      </Button>
+                      {confirmDeleteId !== listing.id ? (
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => { setDeleteMsg(''); setConfirmDeleteId(listing.id); }}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Delete
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={deletingId === listing.id}
+                            onClick={() => setConfirmDeleteId('')}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            disabled={deletingId === listing.id}
+                            onClick={() => handleDelete(listing)}
+                          >
+                            {deletingId === listing.id ? 'Deleting…' : 'Confirm'}
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+            </>
           )}
         </div>
       </div>

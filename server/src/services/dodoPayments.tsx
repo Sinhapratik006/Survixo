@@ -113,61 +113,69 @@ export async function createDodoCheckout({
   const successUrl = `${env.APP_URL}/marketplace/${listingId}/success?order_id=${order.id}`;
   const cancelUrl = `${env.APP_URL}/marketplace/${listingId}/cancel?order_id=${order.id}`;
 
-  // Create the Dodo checkout session
-  const resp = await fetch(`${BASE_URL}/checkouts`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${env.DODO_PAYMENTS_API_KEY}`,
-      'Content-Type': 'application/json',
-      'Idempotency-Key': idempotencyKey,
-    },
-    body: JSON.stringify({
-      line_items: [
-        {
-          price: {
-            unit_amount: amountCents,
-            currency: listing.currency,
-            product_data: {
-              name: listing.title,
-              description: listing.description ?? 'API key purchase from Nexovra marketplace',
-              metadata: {
-                listing_id: listing.id,
-                order_id: order.id,
-                seller_org_id: listing.sellerOrgId,
+  // Create the Dodo checkout session. Every failure path must roll the pending
+  // order back: an orphaned PENDING row with no checkout id blocks the seller
+  // from ever deleting this listing, even though the buyer was never handed a
+  // URL to pay with.
+  let data: { id: string; checkout_url: string; customer?: { id?: string } } | null = null;
+  try {
+    const resp = await fetch(`${BASE_URL}/checkouts`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.DODO_PAYMENTS_API_KEY}`,
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      },
+      body: JSON.stringify({
+        line_items: [
+          {
+            price: {
+              unit_amount: amountCents,
+              currency: listing.currency,
+              product_data: {
+                name: listing.title,
+                description: listing.description ?? 'API key purchase from Nexovra marketplace',
+                metadata: {
+                  listing_id: listing.id,
+                  order_id: order.id,
+                  seller_org_id: listing.sellerOrgId,
+                },
               },
             },
+            quantity: 1,
           },
-          quantity: 1,
+        ],
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        customer: {
+          metadata: {
+            buyer_org_id: buyerOrgId,
+            order_id: order.id,
+          },
         },
-      ],
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      customer: {
         metadata: {
-          buyer_org_id: buyerOrgId,
+          listing_id: listing.id,
           order_id: order.id,
+          seller_org_id: listing.sellerOrgId,
+          buyer_org_id: buyerOrgId,
         },
-      },
-      metadata: {
-        listing_id: listing.id,
-        order_id: order.id,
-        seller_org_id: listing.sellerOrgId,
-        buyer_org_id: buyerOrgId,
-      },
-    }),
-  });
+      }),
+    });
 
-  if (!resp.ok) {
-    const errorText = await resp.text();
-    logger.error({ status: resp.status, body: errorText }, 'dodo checkout creation failed');
-    throw new Error(`Dodo checkout creation failed: ${resp.status}`);
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      logger.error({ status: resp.status, body: errorText }, 'dodo checkout creation failed');
+      throw new Error(`Dodo checkout creation failed: ${resp.status}`);
+    }
+
+    data = (await resp.json()) as typeof data;
+  } finally {
+    if (!data) {
+      await prisma.order.delete({ where: { id: order.id } }).catch(() => {});
+    }
   }
 
-  const data = (await resp.json()) as {
-    id: string;
-    checkout_url: string;
-    customer?: { id?: string };
-  };
+  if (!data) throw new Error('Dodo checkout did not return a session');
 
   // Update order with Dodo checkout ID
   await prisma.order.update({
