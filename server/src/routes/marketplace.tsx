@@ -11,6 +11,7 @@
  *   GET    /api/marketplace/orders            - Buyer's orders (authenticated)
  *   GET    /api/marketplace/orders/:id/api-key - Reveal purchased key (buyer, PAID only)
  *   GET    /api/marketplace/my-listings       - Seller's listings (authenticated)
+ *   GET    /api/marketplace/my-listings/:id   - One listing, owner only (authenticated)
  *   GET    /api/marketplace/payout-account    - Seller's crypto wallet (authenticated)
  *   POST   /api/marketplace/payout-account    - Set seller's crypto wallet (authenticated)
  *   GET    /api/marketplace/seller-orders     - Seller's orders (authenticated)
@@ -384,11 +385,22 @@ marketplaceRouter.post(
       throw new HttpError(503, 'payment_not_configured', 'Payment gateway is not configured on this server.');
     }
 
-    const result = await createDodoCheckout({
-      listingId: body.listingId,
-      buyerOrgId: req.org!.id,
-      idempotencyKey: body.idempotencyKey,
-    });
+    // Dodo failures (bad/expired API key, gateway down) must surface as a
+    // clean 502 the client can show, never an unhandled 500.
+    let result;
+    try {
+      result = await createDodoCheckout({
+        listingId: body.listingId,
+        buyerOrgId: req.org!.id,
+        idempotencyKey: body.idempotencyKey,
+      });
+    } catch {
+      throw new HttpError(
+        502,
+        'payment_gateway_error',
+        'The payment gateway rejected this checkout. Check the DODO_PAYMENTS_API_KEY configured on the server.',
+      );
+    }
 
     res.status(201).json({
       checkoutId: result.checkoutId,
@@ -489,6 +501,28 @@ marketplaceRouter.get('/my-listings', async (req, res) => {
   });
 });
 
+// Owner-only detail for the manage page. Returns everything the seller may
+// see (including description/models/orderCount) but never the ciphertext —
+// and 404s for listings belonging to another org.
+marketplaceRouter.get('/my-listings/:id', async (req, res) => {
+  const listing = await prisma.marketplaceListing.findFirst({
+    where: { id: String(req.params.id), sellerOrgId: req.org!.id },
+    include: { _count: { select: { orders: true } } },
+  });
+  if (!listing) throw notFound('Listing not found');
+
+  const { _count, ...rest } = listing;
+  res.json({
+    listing: {
+      ...rest,
+      priceUsd: (listing.priceCents / 100).toFixed(2),
+      apiKeyEncrypted: undefined,
+      orderCount: _count.orders,
+      isSoldOut: listing.maxBuyers !== null && listing.buyerCount >= listing.maxBuyers,
+    },
+  });
+});
+
 // ───────────── Seller: Crypto payout account ─────────────
 
 const payoutAccountSchema = z.object({
@@ -540,6 +574,7 @@ marketplaceRouter.get('/seller-orders', async (req, res) => {
   res.json({
     data: orders.map((o) => ({
       id: o.id,
+      listingId: o.listing.id,
       listingTitle: o.listing.title,
       buyerOrg: o.buyerOrg.name,
       amountUsd: (o.amountCents / 100).toFixed(2),

@@ -3,18 +3,44 @@ import Link from 'next/link';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import Button from '../../components/Button';
+import Badge from '../../components/ui/badge';
 import { cn } from '../../components/lib/cn.js';
-import { api } from '../../lib/api.js';
+import { api, formatUsd } from '../../lib/api.js';
 
 export default function SellerDashboard() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
+  // Require a session — signed-out visitors go to /login and come back here,
+  // instead of seeing an empty dashboard.
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (!window.location.pathname.includes('/seller')) return;
+      try {
+        const res = await api.get('/api/auth/me');
+        if (cancelled) return;
+        // /api/auth/me answers 200 with { user: null } when signed out,
+        // so check the payload rather than relying on a thrown error.
+        if (res.data && res.data.user) setCheckingAuth(false);
+        else window.location.href = '/login?next=/seller/dashboard';
+      } catch (e) {
+        if (cancelled) return;
+        if (e.status === 401 || e.status === 403) {
+          window.location.href = '/login?next=/seller/dashboard';
+        } else {
+          setCheckingAuth(false);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (checkingAuth) return;
+    let cancelled = false;
+    (async () => {
       setLoading(true);
       try {
         const res = await api.get('/api/marketplace/my-listings');
@@ -27,13 +53,25 @@ export default function SellerDashboard() {
         if (!cancelled) setLoading(false);
       }
     })();
-  }, []);
+    return () => { cancelled = true; };
+  }, [checkingAuth]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
     // Navigate to create listing page or show create dialog
     window.location.href = '/seller/create';
   };
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-canvas dark:bg-navy-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-slate-500 dark:text-slate-400">Checking your session…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-canvas dark:bg-navy-950">
@@ -99,7 +137,7 @@ export default function SellerDashboard() {
                         ${formatUsd(listing.priceUsd)} / 1M tokens
                       </span>
                       <Badge
-                        variant={listing.status === 'active' ? 'default' : 'secondary'}
+                        variant={listing.status === 'ACTIVE' ? 'default' : 'secondary'}
                         size="sm"
                       >
                         {listing.status}
@@ -108,7 +146,7 @@ export default function SellerDashboard() {
                   </div>
                   <div className="p-3 border-t border-slate-200 dark:border-navy-700">
                     <a
-                      href="/seller/listing/{listing.id}"
+                      href={`/seller/listing/${listing.id}`}
                       className="text-sm text-brand-600 dark:text-brand-400 hover:underline transition-colors"
                     >
                       View Details
@@ -116,7 +154,7 @@ export default function SellerDashboard() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.location.href = '/seller/listing/' + listing.id}
+                      onClick={() => { window.location.href = `/seller/listing/${listing.id}`; }}
                     >
                       Manage
                     </Button>

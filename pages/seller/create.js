@@ -19,6 +19,7 @@ export default function SellerCreatePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [dark, setDark] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
     const prefersDark = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -30,6 +31,30 @@ export default function SellerCreatePage() {
       document.documentElement.classList.toggle('dark', storedDark === 'dark');
     }
   }, []);
+
+  // Require a session before the form can be used. Signed-out visitors are
+  // sent to /login and returned here afterwards, instead of filling in the
+  // form only to get "Authentication required" on submit.
+  useEffect(() => {
+    if (!router.isReady) return;
+    let cancelled = false;
+    (async () => {
+      const goToLogin = () => router.replace('/login?next=/seller/create');
+      try {
+        const res = await api.get('/api/auth/me');
+        if (cancelled) return;
+        // /api/auth/me answers 200 with { user: null } when signed out,
+        // so check the payload rather than relying on a thrown error.
+        if (res.data && res.data.user) setCheckingAuth(false);
+        else goToLogin();
+      } catch (err) {
+        if (cancelled) return;
+        if (err.status === 401 || err.status === 403) goToLogin();
+        else setCheckingAuth(false); // transient failure: let them through
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [router.isReady]);
 
   const toggleTheme = () => {
     setDark((dark) => {
@@ -70,6 +95,17 @@ export default function SellerCreatePage() {
   };
 
   const labelCls = 'block text-sm font-medium text-slate-600 dark:text-slate-400 uppercase tracking-tighter mb-2';
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-canvas dark:bg-navy-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-slate-500 dark:text-slate-400">Checking your session…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-canvas dark:bg-navy-950">

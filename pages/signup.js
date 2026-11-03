@@ -28,8 +28,8 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-canvas to-white dark:from-navy-950 dark:to-navy-900 relative overflow-hidden">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-brand-500/10 blur-3xl -mt-32" />
-      <div className="absolute bottom-0 right-1/2 translate-x-1/2 w-[600px] h-[600px] rounded-full bg-purple-500/10 blur-3xl -mb-32" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-brand-500/10 blur-3xl -mt-32 pointer-events-none" />
+      <div className="absolute bottom-0 right-1/2 translate-x-1/2 w-[600px] h-[600px] rounded-full bg-purple-500/10 blur-3xl -mb-32 pointer-events-none" />
 
       <div className="flex items-center justify-center min-h-screen px-4">
         <div className="max-w-md w-full">

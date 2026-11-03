@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import { api } from '../lib/api.js';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,7 +19,12 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await api.post('/api/auth/login', { email, password });
-      window.location.href = '/app/keys';
+      // Return the user to the page they came from (e.g. /seller/create),
+      // but only allow same-origin relative paths so this can't be an open redirect.
+      const next = router.query.next;
+      const safeNext =
+        typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') && !next.startsWith('/\\');
+      window.location.href = safeNext ? next : '/app/keys';
     } catch (err) {
       setError(err.message || 'Incorrect email or password.');
     } finally {
@@ -27,8 +34,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-canvas to-white dark:from-navy-950 dark:to-navy-900 relative overflow-hidden">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-brand-500/10 blur-3xl -mt-32" />
-      <div className="absolute bottom-0 right-1/2 translate-x-1/2 w-[600px] h-[600px] rounded-full bg-purple-500/10 blur-3xl -mb-32" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-brand-500/10 blur-3xl -mt-32 pointer-events-none" />
+      <div className="absolute bottom-0 right-1/2 translate-x-1/2 w-[600px] h-[600px] rounded-full bg-purple-500/10 blur-3xl -mb-32 pointer-events-none" />
 
       <div className="flex items-center justify-center min-h-screen px-4">
         <div className="max-w-md w-full">

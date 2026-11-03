@@ -2,12 +2,14 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/seller/create": "pages/seller/create.js",
   "/seller/dashboard": "pages/seller/dashboard.js",
+  "/seller/listing/[id]": "pages/seller/listing/[id].js",
+  "/login": "pages/login.js",
+  "/seller/create": "pages/seller/create.js",
   "/": "pages/index.js",
   "/calculator": "pages/calculator.js",
-  "/login": "pages/login.js",
   "/buyer/marketplace": "pages/buyer/marketplace.js",
   "/marketplace": "pages/marketplace.js",
+  "/app/keys": "pages/app/keys.js",
   "/analytics": "pages/analytics.js"
 }

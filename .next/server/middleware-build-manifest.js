@@ -59,6 +59,11 @@ globalThis.__BUILD_MANIFEST = {
       "static/chunks/webpack.js",
       "static/chunks/main.js",
       "static/chunks/pages/seller/dashboard.js"
+    ],
+    "/seller/listing/[id]": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/seller/listing/[id].js"
     ]
   },
   "ampFirstPages": []
