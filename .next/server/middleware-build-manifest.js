@@ -20,11 +20,6 @@ globalThis.__BUILD_MANIFEST = {
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
-    "/buyer/marketplace": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/buyer/marketplace.js"
-    ],
     "/seller/create": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",

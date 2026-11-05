@@ -2,14 +2,22 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import {
   Menu, Sun, Moon, Eye, EyeOff, ShieldCheck, Info,
-  ArrowLeft, Pause, Play, Trash2, KeyRound, Check, Loader2,
+  ArrowLeft, Pause, Play, Trash2, KeyRound, Check, Loader2, CheckCircle2, XCircle,
 } from 'lucide-react';
 import Button from '../../../components/Button';
 import Input from '../../../components/Input';
 import Badge from '../../../components/ui/badge';
 import { api, formatUsd } from '../../../lib/api.js';
-
-const PLATFORM_FEE_RATE = 0.2; // 20% platform commission
+import {
+  CREDIT_BUY_PCT,
+  CREDIT_SELL_PCT,
+  CREDIT_PLATFORM_MARGIN_PCT,
+  sellerPayout,
+  buyerPrice,
+  platformMargin,
+  creditValueFromBuyerPrice,
+  sellerPayoutFromBuyerPrice,
+} from '../../../lib/pricing.js';
 
 export default function SellerListingManagePage() {
   const router = useRouter();
@@ -38,6 +46,7 @@ export default function SellerListingManagePage() {
   const [showNewKey, setShowNewKey] = useState(false);
   const [rotating, setRotating] = useState(false);
   const [rotateMsg, setRotateMsg] = useState('');
+  const [rotateCheck, setRotateCheck] = useState({ state: 'idle' });
 
   // status actions
   const [statusBusy, setStatusBusy] = useState('');
@@ -90,7 +99,9 @@ export default function SellerListingManagePage() {
       setListing(l);
       setTitle(l.title || '');
       setDescription(l.description || '');
-      setPrice(String(l.priceUsd ?? ''));
+      // The form edits the credits' face value; the API reports it directly
+      // and falls back to deriving it from the buyer price for older payloads.
+      setPrice(String(l.creditValueUsd ?? creditValueFromBuyerPrice(l.priceUsd ?? 0).toFixed(2)));
       setModels(Array.isArray(l.models) ? l.models.join(', ') : '');
       setMaxBuyers(l.maxBuyers != null ? String(l.maxBuyers) : '');
       setOrders((sellerOrders.data?.data || []).filter((o) => o.listingId === l.id));
@@ -118,15 +129,43 @@ export default function SellerListingManagePage() {
   };
 
   const priceNum = Number(price) || 0;
-  const feeUsd = priceNum * PLATFORM_FEE_RATE;
-  const netUsd = priceNum - feeUsd;
+  const payoutUsd = sellerPayout(priceNum);
+  const buyerUsd = buyerPrice(priceNum);
+  const marginUsd = platformMargin(priceNum);
+
+  // Same live health gate as the create form: the replacement key is probed
+  // before it can be submitted, and the server re-checks it anyway.
+  useEffect(() => {
+    const key = newKey.trim();
+    if (key.length < 12) {
+      setRotateCheck({ state: 'idle' });
+      return;
+    }
+    let cancelled = false;
+    setRotateCheck({ state: 'checking' });
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.post('/api/marketplace/verify-key', {
+          apiKey: key,
+          models: Array.isArray(listing?.models) ? listing.models : undefined,
+        });
+        if (!cancelled) setRotateCheck({ state: res.data.ok ? 'ok' : 'fail', ...res.data });
+      } catch (err) {
+        if (!cancelled) setRotateCheck({ state: 'fail', detail: err.message || 'Could not reach the verification service.' });
+      }
+    }, 700);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [newKey, listing]);
 
   const handleSave = async (e) => {
     e.preventDefault();
     setEditError('');
     setSaveMsg('');
     if (priceNum < 0.01) {
-      setEditError('Price must be at least $0.01.');
+      setEditError('Credit value must be at least $0.01.');
       return;
     }
     setSaving(true);
@@ -134,7 +173,7 @@ export default function SellerListingManagePage() {
       await api.patch(`/api/marketplace/listings/${id}`, {
         title: title.trim(),
         description: description.trim(),
-        priceUsd: priceNum,
+        creditValueUsd: priceNum,
         models: models.split(',').map((m) => m.trim()).filter(Boolean),
         maxBuyers: maxBuyers.trim() === '' ? null : Number(maxBuyers),
       });
@@ -216,7 +255,7 @@ export default function SellerListingManagePage() {
             <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-brand-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-brand-500/30 relative overflow-hidden">
               <span className="text-white font-bold text-sm">N</span>
             </div>
-            <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">Surplus Intelligence</span>
+            <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">Survixo</span>
           </a>
           <div className="hidden md:flex items-center gap-6">
             <a href="/seller/dashboard" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
@@ -395,11 +434,14 @@ export default function SellerListingManagePage() {
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div className="bg-white dark:bg-navy-800/50 rounded-xl p-5 shadow-sm">
-              <p className="text-xs uppercase tracking-tighter text-slate-500 dark:text-slate-400 mb-1">Price</p>
+              <p className="text-xs uppercase tracking-tighter text-slate-500 dark:text-slate-400 mb-1">Sale price</p>
               <p className="text-xl font-semibold text-slate-900 dark:text-white">
-                ${formatUsd(listing.priceUsd)}
+                {formatUsd(listing.priceUsd)}
               </p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">per 1M tokens</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                for {formatUsd(listing.creditValueUsd ?? creditValueFromBuyerPrice(listing.priceUsd))} of credits
+                · you get {formatUsd(sellerPayoutFromBuyerPrice(listing.priceUsd))}
+              </p>
             </div>
             <div className="bg-white dark:bg-navy-800/50 rounded-xl p-5 shadow-sm">
               <p className="text-xs uppercase tracking-tighter text-slate-500 dark:text-slate-400 mb-1">Buyers</p>
@@ -470,7 +512,7 @@ export default function SellerListingManagePage() {
                   <Input value={description} onChange={(e) => setDescription(e.target.value)} maxLength={1000} />
                 </div>
                 <div>
-                  <label className={labelCls}>Price (USD per 1M tokens)</label>
+                  <label className={labelCls}>Credit value (USD)</label>
                   <Input
                     type="number"
                     step="0.01"
@@ -479,21 +521,33 @@ export default function SellerListingManagePage() {
                     onChange={(e) => setPrice(e.target.value)}
                     required
                   />
+                  <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">
+                    Face value of the API credits you are selling — we buy them at {CREDIT_BUY_PCT}% and
+                    list them for buyers at {CREDIT_SELL_PCT}%.
+                  </p>
                   {priceNum > 0 && (
                     <div className="mt-2 rounded-lg bg-slate-50 dark:bg-navy-900/60 border border-slate-200 dark:border-navy-700 p-3 text-xs">
                       <div className="flex justify-between text-slate-600 dark:text-slate-300">
-                        <span>List price</span>
+                        <span className="flex items-center gap-1">
+                          <Info className="w-3 h-3" /> API credits worth
+                        </span>
                         <span className="font-medium">${priceNum.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-slate-500 dark:text-slate-400 mt-1">
-                        <span className="flex items-center gap-1">
-                          <Info className="w-3 h-3" /> Platform fee (20%)
-                        </span>
-                        <span>−${feeUsd.toFixed(2)}</span>
+                        <span>We buy them at {CREDIT_BUY_PCT}%</span>
+                        <span>${payoutUsd.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-500 dark:text-slate-400 mt-1">
+                        <span>Buyers pay {CREDIT_SELL_PCT}%</span>
+                        <span>${buyerUsd.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-500 dark:text-slate-400 mt-1">
+                        <span>Platform keeps {CREDIT_PLATFORM_MARGIN_PCT}%</span>
+                        <span>${marginUsd.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-emerald-600 dark:text-emerald-400 mt-1 pt-1 border-t border-slate-200 dark:border-navy-700">
-                        <span className="font-medium">You earn</span>
-                        <span className="font-medium">${netUsd.toFixed(2)}</span>
+                        <span className="font-medium">You receive per sale</span>
+                        <span className="font-medium">${payoutUsd.toFixed(2)}</span>
                       </div>
                     </div>
                   )}
@@ -574,12 +628,39 @@ export default function SellerListingManagePage() {
                     <ShieldCheck className="w-4 h-4 shrink-0 text-brand-600 dark:text-brand-400 mt-0.5" />
                     <p className="text-xs text-brand-800 dark:text-brand-300">
                       Encrypted with AES-256-GCM before it touches the database. Buyers only ever
-                      receive it after a successful payment.
+                      receive it after a successful payment, and the key is verified live before it
+                      replaces your current one.
                     </p>
                   </div>
 
+                  {rotateCheck.state === 'checking' && (
+                    <p className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Checking key health against the provider…
+                    </p>
+                  )}
+                  {rotateCheck.state === 'ok' && (
+                    <p className="flex items-start gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-px" />
+                      <span>
+                        Key verified — {rotateCheck.provider}
+                        {rotateCheck.modelCount ? `, ${rotateCheck.modelCount} model(s) available` : ''}.
+                      </span>
+                    </p>
+                  )}
+                  {rotateCheck.state === 'fail' && (
+                    <p className="flex items-start gap-1.5 text-xs text-rose-600 dark:text-rose-400">
+                      <XCircle className="w-3.5 h-3.5 shrink-0 mt-px" />
+                      <span>{rotateCheck.detail}</span>
+                    </p>
+                  )}
+
                   <div className="flex justify-end">
-                    <Button type="submit" variant="outline" disabled={rotating || !newKey.trim()}>
+                    <Button
+                      type="submit"
+                      variant="outline"
+                      disabled={rotating || !newKey.trim() || rotateCheck.state === 'checking'}
+                    >
                       {rotating ? 'Updating…' : 'Replace key'}
                     </Button>
                   </div>

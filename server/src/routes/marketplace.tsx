@@ -7,6 +7,7 @@
  *   POST   /api/marketplace/listings          - Create a listing (seller)
  *   PATCH  /api/marketplace/listings/:id      - Update a listing (seller)
  *   DELETE /api/marketplace/listings/:id      - Archive a listing (seller)
+ *   POST   /api/marketplace/verify-key        - Probe an API key's health (seller)
  *   POST   /api/marketplace/checkout          - Create Dodo checkout session (buyer)
  *   GET    /api/marketplace/orders            - Buyer's orders (authenticated)
  *   GET    /api/marketplace/orders/:id/api-key - Reveal purchased key (buyer, PAID only)
@@ -41,8 +42,15 @@ import { logger } from '../lib/logger.js';
 import { audit } from '../services/audit.js';
 import { emitEvent } from '../services/events.js';
 import { clientIp } from '../services/sessions.js';
+import { buyerPriceCents, creditValueCentsFromPrice } from '../lib/pricing.js';
+import { checkListingKey } from '../services/listingKeyHealth.js';
 
 export const marketplaceRouter = Router();
+
+/** Face value of the credits a listing represents, as a USD string. */
+function creditValueUsd(priceCents: number): string {
+  return (creditValueCentsFromPrice(priceCents) / 100).toFixed(2);
+}
 
 // ───────────── Dodo Webhook Router (no auth, raw body for signature verification) ─────────────
 
@@ -54,7 +62,16 @@ dodoWebhookRouter.post('/', async (req, res, next) => {
     const timestamp = req.get('webhook-timestamp') ?? '';
     const signature = req.get('webhook-signature') ?? '';
 
-    if (!verifyDodoSignature((req.body as Buffer).toString('utf8'), webhookId, timestamp, signature, env.DODO_PAYMENTS_WEBHOOK_KEY)) {
+    if (
+      !verifyDodoSignature(
+        (req.body as Buffer).toString('utf8'),
+        webhookId,
+        timestamp,
+        signature,
+        // An unset secret must fail verification, never throw.
+        env.DODO_PAYMENTS_WEBHOOK_KEY ?? '',
+      )
+    ) {
       return res.status(400).json({ error: { code: 'invalid_signature', message: 'Invalid Dodo webhook signature' } });
     }
 
@@ -133,6 +150,7 @@ marketplaceRouter.get('/listings', async (req, res) => {
     data: data.map((l) => ({
       ...l,
       priceUsd: (l.priceCents / 100).toFixed(2),
+      creditValueUsd: creditValueUsd(l.priceCents),
       isSoldOut: l.maxBuyers !== null && l.buyerCount >= l.maxBuyers,
     })),
     total,
@@ -151,6 +169,7 @@ marketplaceRouter.get('/listings/:id', async (req, res) => {
     listing: {
       ...listing,
       priceUsd: (listing.priceCents / 100).toFixed(2),
+      creditValueUsd: creditValueUsd(listing.priceCents),
       isSoldOut: listing.maxBuyers !== null && listing.buyerCount >= listing.maxBuyers,
       apiKeyEncrypted: undefined,
     },
@@ -169,20 +188,101 @@ marketplaceRouter.use(requireOrg());
 
 // ───────────── Seller: Create/manage listings ─────────────
 
-const listingSchema = z.object({
-  title: z.string().trim().min(1).max(120),
-  description: z.string().trim().max(1000).optional(),
-  priceUsd: z.coerce.number().min(0.01).max(100_000),
+/**
+ * A listing is priced from the face value of the API credits being sold:
+ * the platform buys at 60% of that value and lists at 75% (see lib/pricing).
+ * `priceUsd` is accepted as a legacy alias for `creditValueUsd`.
+ */
+const creditValueField = z.coerce.number().min(0.01).max(100_000);
+
+/**
+ * Sellers type base URLs in every shape: full addresses, bare hosts copied
+ * from provider docs (`api.openai.com/v1`), protocol-relative `//host`, and
+ * wrapped pastes with stray whitespace. Normalise first so a usable value is
+ * never bounced back as a validation error; only genuinely unusable input
+ * fails validation.
+ */
+function normalizeBaseUrl(raw: string): string {
+  // Line breaks/tabs come from wrapped pastes and are never valid in a URL;
+  // other inner whitespace is kept so "not a url" still fails validation.
+  const v = raw.replace(/[\t\r\n]+/g, '').trim();
+  if (!v) return v;
+  // An explicit scheme is kept exactly as typed (validated below).
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(v)) return v;
+  const bare = v.replace(/^\/+/, '');
+  // Local targets are http in dev setups; anything else defaults to https.
+  const loopback = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(?::|\/|$)/i.test(bare);
+  return `${loopback ? 'http://' : 'https://'}${bare}`;
+}
+
+export const optionalBaseUrl = z.preprocess(
+  (v) => (typeof v === 'string' ? normalizeBaseUrl(v) : v),
+  z
+    .string()
+    .max(300)
+    .refine(
+      (v) => {
+        if (v === '') return true;
+        try {
+          const u = new URL(v);
+          return u.protocol === 'http:' || u.protocol === 'https:';
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Use a valid http:// or https:// URL, e.g. api.openai.com/v1' },
+    )
+    .optional()
+    .transform((v) => (v ? v.replace(/\/+$/, '') : undefined)),
+);
+
+const listingSchema = z
+  .object({
+    title: z.string().trim().min(1).max(120),
+    description: z.string().trim().max(1000).optional(),
+    creditValueUsd: creditValueField.optional(),
+    priceUsd: creditValueField.optional(),
+    apiKey: z.string().min(1).max(2000),
+    baseUrl: optionalBaseUrl,
+    models: z.array(z.string().min(1).max(200)).default([]),
+    maxBuyers: z.coerce.number().int().min(1).max(10_000).optional(),
+  })
+  .refine((v) => v.creditValueUsd !== undefined || v.priceUsd !== undefined, {
+    message: 'Credit value is required',
+    path: ['creditValueUsd'],
+  });
+
+// ───────────── Seller: Verify an API key's health (used by the listing forms) ─────────────
+
+const verifyKeySchema = z.object({
   apiKey: z.string().min(1).max(2000),
-  models: z.array(z.string().min(1).max(200)).default([]),
-  maxBuyers: z.coerce.number().int().min(1).max(10_000).optional(),
+  baseUrl: optionalBaseUrl,
+  models: z.array(z.string().min(1).max(200)).optional(),
 });
+
+marketplaceRouter.post(
+  '/verify-key',
+  requirePermission('seller:manage'),
+  rateLimit({ name: 'key-verify', windowSeconds: 60, max: 15, key: userKey }),
+  async (req, res) => {
+    const body = parse(verifyKeySchema, req.body);
+    res.json(await checkListingKey({ apiKey: body.apiKey, baseUrl: body.baseUrl, models: body.models }));
+  },
+);
 
 marketplaceRouter.post('/listings', requirePermission('seller:manage'), async (req, res) => {
   const body = parse(listingSchema, req.body);
   const orgId = req.org!.id;
 
-  const amountCents = Math.round(body.priceUsd * 100);
+  const creditCents = Math.round((body.creditValueUsd ?? body.priceUsd!) * 100);
+  // What buyers pay: 75% of the credits' face value.
+  const amountCents = buyerPriceCents(creditCents);
+
+  // Gate on key health first — a listing is only as good as the credential
+  // behind it, and nothing else downstream ever re-checks it.
+  const health = await checkListingKey({ apiKey: body.apiKey, baseUrl: body.baseUrl, models: body.models });
+  if (!health.ok) throw badRequest(health.detail, undefined, 'invalid_api_key');
+
   // Masked hint only — never expose more than the last 4 characters.
   const apiKeyPrefix = body.apiKey.length > 8 ? `••••${body.apiKey.slice(-4)}` : '••••';
 
@@ -254,7 +354,7 @@ marketplaceRouter.post('/listings', requirePermission('seller:manage'), async (r
     targetType: 'listing',
     targetId: listing.id,
     ip: clientIp(req),
-    metadata: { title: body.title, priceUsd: body.priceUsd },
+    metadata: { title: body.title, creditValueUsd: creditValueUsd(amountCents), priceUsd: (amountCents / 100).toFixed(2) },
   });
 
   await emitEvent({
@@ -262,7 +362,7 @@ marketplaceRouter.post('/listings', requirePermission('seller:manage'), async (r
     type: 'listing.created',
     title: 'Listing created',
     body: `Your API key listing "${body.title}" is now live on the marketplace`,
-    data: { listingId: listing.id, priceUsd: body.priceUsd },
+    data: { listingId: listing.id, priceUsd: (amountCents / 100).toFixed(2) },
   });
 
   res.status(201).json({
@@ -271,6 +371,7 @@ marketplaceRouter.post('/listings', requirePermission('seller:manage'), async (r
       title: listing.title,
       description: listing.description,
       priceUsd: (listing.priceCents / 100).toFixed(2),
+      creditValueUsd: creditValueUsd(listing.priceCents),
       status: listing.status,
       apiKeyPrefix: listing.apiKeyPrefix,
       models: listing.models,
@@ -282,8 +383,10 @@ marketplaceRouter.post('/listings', requirePermission('seller:manage'), async (r
 const listingUpdateSchema = z.object({
   title: z.string().trim().min(1).max(120).optional(),
   description: z.string().trim().max(1000).optional(),
-  priceUsd: z.coerce.number().min(0.01).max(100_000).optional(),
+  creditValueUsd: creditValueField.optional(),
+  priceUsd: creditValueField.optional(),
   apiKey: z.string().min(1).max(2000).optional(),
+  baseUrl: optionalBaseUrl,
   models: z.array(z.string().min(1).max(200)).optional(),
   maxBuyers: z.coerce.number().int().min(1).max(10_000).nullish(),
   status: z.enum(['ACTIVE', 'PAUSED', 'ARCHIVED']).optional(),
@@ -301,10 +404,22 @@ marketplaceRouter.patch('/listings/:id', requirePermission('seller:manage'), asy
   const body = parse(listingUpdateSchema, req.body);
   const listing = await ownedListing(req, String(req.params.id));
 
+  // A rotated key must pass the same health gate as a brand-new listing,
+  // otherwise a seller could swap in garbage after the fact.
+  if (body.apiKey !== undefined) {
+    const health = await checkListingKey({
+      apiKey: body.apiKey,
+      baseUrl: body.baseUrl,
+      models: body.models ?? listing.models,
+    });
+    if (!health.ok) throw badRequest(health.detail, undefined, 'invalid_api_key');
+  }
+
   const updateData: Record<string, unknown> = {};
   if (body.title !== undefined) updateData.title = body.title;
   if (body.description !== undefined) updateData.description = body.description;
-  if (body.priceUsd !== undefined) updateData.priceCents = Math.round(body.priceUsd * 100);
+  const newCreditValueUsd = body.creditValueUsd ?? body.priceUsd;
+  if (newCreditValueUsd !== undefined) updateData.priceCents = buyerPriceCents(Math.round(newCreditValueUsd * 100));
   if (body.models !== undefined) updateData.models = body.models;
   if (body.maxBuyers !== undefined) updateData.maxBuyers = body.maxBuyers;
   if (body.status !== undefined) updateData.status = body.status;
@@ -334,6 +449,7 @@ marketplaceRouter.patch('/listings/:id', requirePermission('seller:manage'), asy
       id: updated.id,
       title: updated.title,
       priceUsd: (updated.priceCents / 100).toFixed(2),
+      creditValueUsd: creditValueUsd(updated.priceCents),
       status: updated.status,
       apiKeyPrefix: updated.apiKeyPrefix,
     },
@@ -540,6 +656,7 @@ marketplaceRouter.get('/my-listings', async (req, res) => {
       id: l.id,
       title: l.title,
       priceUsd: (l.priceCents / 100).toFixed(2),
+      creditValueUsd: creditValueUsd(l.priceCents),
       status: l.status,
       isSold: l.isSold,
       buyerCount: l.buyerCount,
@@ -565,6 +682,7 @@ marketplaceRouter.get('/my-listings/:id', async (req, res) => {
     listing: {
       ...rest,
       priceUsd: (listing.priceCents / 100).toFixed(2),
+      creditValueUsd: creditValueUsd(listing.priceCents),
       apiKeyEncrypted: undefined,
       orderCount: _count.orders,
       isSoldOut: listing.maxBuyers !== null && listing.buyerCount >= listing.maxBuyers,

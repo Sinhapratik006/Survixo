@@ -135,12 +135,19 @@ export default function MarketplacePage() {
                   <h3 className="text-base font-medium text-slate-900 dark:text-white truncate">{key.title}</h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-3">{key.description || 'No description'}</p>
                   <div className="mt-3 flex items-baseline gap-2">
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      ${formatUsd(key.priceUsd)} / 1M tokens
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {formatUsd(key.priceUsd)}
                     </span>
-                    <span className="inline-block align-middle px-2 py-1 rounded text-xs font-bold ${
-                      key.status === 'active' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100/30 dark:border-emerald-900/30' : 'bg-slate-200 dark:bg-navy-700 text-slate-500 border border-slate-200 dark:border-navy-700'
-                    }">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      for {formatUsd(key.creditValueUsd)} of API credits
+                    </span>
+                    <span
+                      className={`inline-block align-middle px-2 py-1 rounded text-xs font-bold ${
+                        key.status === 'ACTIVE'
+                          ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100/30 dark:border-emerald-900/30'
+                          : 'bg-slate-200 dark:bg-navy-700 text-slate-500 border border-slate-200 dark:border-navy-700'
+                      }`}
+                    >
                       {key.status}
                     </span>
                   </div>

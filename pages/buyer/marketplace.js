@@ -208,14 +208,14 @@ export default function BuyerMarketplacePage() {
                 <div className="p-5 flex flex-col">
                   <h3 className="text-base font-medium text-slate-900 dark:text-white truncate">{key.title}</h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-3">{key.description || 'No description'}</p>
-                  <div className="mt-3 flex items-baseline gap-2">
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      ${formatUsd(key.priceUsd)} / 1M tokens
+                  <div className="mt-3 flex items-baseline gap-2 flex-wrap">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {formatUsd(key.priceUsd)}
                     </span>
-                    <Badge
-                      variant={key.status === 'ACTIVE' ? 'default' : 'secondary'}
-                      size="sm"
-                    >
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      for {formatUsd(key.creditValueUsd)} of API credits
+                    </span>
+                    <Badge variant={key.status === 'ACTIVE' ? 'default' : 'secondary'} size="sm">
                       {key.status}
                     </Badge>
                   </div>

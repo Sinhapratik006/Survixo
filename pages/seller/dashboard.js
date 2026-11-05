@@ -7,6 +7,7 @@ import Badge from '../../components/ui/badge';
 import { Trash2 } from 'lucide-react';
 import { cn } from '../../components/lib/cn.js';
 import { api, formatUsd } from '../../lib/api.js';
+import { sellerPayoutFromBuyerPrice } from '../../lib/pricing.js';
 
 export default function SellerDashboard() {
   const [listings, setListings] = useState([]);
@@ -172,7 +173,7 @@ export default function SellerDashboard() {
                     </p>
                     <div className="mt-2 flex items-baseline gap-2">
                       <span className="text-xs text-slate-500 dark:text-slate-400">
-                        ${formatUsd(listing.priceUsd)} / 1M tokens
+                        You get {formatUsd(sellerPayoutFromBuyerPrice(listing.priceUsd))} · buyer pays {formatUsd(listing.priceUsd)}
                       </span>
                       <Badge
                         variant={listing.status === 'ACTIVE' ? 'default' : 'secondary'}

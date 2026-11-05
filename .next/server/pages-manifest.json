@@ -2,8 +2,6 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/seller/dashboard": "pages/seller/dashboard.js",
   "/seller/create": "pages/seller/create.js",
-  "/buyer/marketplace": "pages/buyer/marketplace.js",
-  "/analytics": "pages/analytics.js"
+  "/seller/dashboard": "pages/seller/dashboard.js"
 }

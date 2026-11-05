@@ -272,7 +272,7 @@ describe('Smart Budget Guard and spending limits (server-side)', () => {
 
   it('applies per-key rate limits', async () => {
     const slow = await createApiKey(buyer, { name: 'slow', rpmLimit: 2 });
-    const statuses = [];
+    const statuses: number[] = [];
     for (let i = 0; i < 3; i++) statuses.push((await v1(slow.secret).get('/v1/models')).status);
     expect(statuses).toEqual([200, 200, 429]);
   });

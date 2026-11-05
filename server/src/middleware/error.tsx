@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import { ZodError, type ZodType } from 'zod';
+import { Prisma } from '@prisma/client';
 import { HttpError, badRequest } from '../lib/errors.js';
 import { logger } from '../lib/logger.js';
 import { InferenceError } from '../services/inference.js';
@@ -19,6 +20,19 @@ export function parse<T>(schema: ZodType<T>, data: unknown): T {
 
 function isV1(req: Request) {
   return req.originalUrl.startsWith('/v1/');
+}
+
+/**
+ * Transient database failures (server unreachable, connect timeout, pool
+ * exhausted) are not bugs — they must surface as a retryable status with an
+ * actionable message instead of the generic 500.
+ */
+function isDatabaseUnavailable(err: unknown): boolean {
+  if (err instanceof Prisma.PrismaClientInitializationError) return true;
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    return err.code === 'P1001' || err.code === 'P1002' || err.code === 'P1009' || err.code === 'P2024';
+  }
+  return false;
 }
 
 /** OpenAI-style error envelope used by the /v1 API. */
@@ -58,6 +72,11 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     status = 400;
     code = 'invalid_json';
     message = 'Request body is not valid JSON.';
+  } else if (isDatabaseUnavailable(err)) {
+    status = 503;
+    code = 'service_unavailable';
+    message = 'The service is temporarily unable to reach the database. Please try again in a moment.';
+    logger.error({ err, path: req.path }, 'database unavailable');
   } else {
     logger.error({ err, path: req.path }, 'unhandled error');
   }

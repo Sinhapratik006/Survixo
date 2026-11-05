@@ -17,6 +17,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { env } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
 import { usdToMicros, microsToUsd } from '../lib/money.js';
+import { platformFeeCentsFromPrice, sellerEarningCentsFromPrice } from '../lib/pricing.js';
 import { encryptSecret, decryptSecret } from '../security/crypto.js';
 import { logger } from '../lib/logger.js';
 import { audit } from '../services/audit.js';
@@ -29,6 +30,13 @@ export interface DodoCheckoutResult {
   checkoutId: string;
   checkoutUrl: string;
   orderId: string;
+}
+
+/** Shape of the session object returned by POST /checkouts. */
+interface DodoCheckoutSession {
+  id: string;
+  checkout_url: string;
+  customer?: { id?: string };
 }
 
 export interface DodoWebhookEvent {
@@ -93,10 +101,13 @@ export async function createDodoCheckout({
   if (listing.isSold && listing.maxBuyers !== null && listing.buyerCount >= listing.maxBuyers)
     throw new Error('Listing is sold out');
 
+  // The listing price is 75% of the credits' face value; the seller is paid
+  // 60% of face value and the platform keeps the 15% difference between the
+  // two (see lib/pricing.tsx) — $100 of credits sells for $75 and pays the
+  // seller $60.
   const amountCents = listing.priceCents;
-  const feeBps = env.PLATFORM_FEE_BPS;
-  const platformFeeCents = Math.round((amountCents * feeBps) / 10_000);
-  const sellerEarningCents = amountCents - platformFeeCents;
+  const sellerEarningCents = sellerEarningCentsFromPrice(amountCents);
+  const platformFeeCents = platformFeeCentsFromPrice(amountCents);
 
   // Create an order record first (pending)
   const order = await prisma.order.create({
@@ -117,7 +128,7 @@ export async function createDodoCheckout({
   // order back: an orphaned PENDING row with no checkout id blocks the seller
   // from ever deleting this listing, even though the buyer was never handed a
   // URL to pay with.
-  let data: { id: string; checkout_url: string; customer?: { id?: string } } | null = null;
+  let data: DodoCheckoutSession | null = null;
   try {
     const resp = await fetch(`${BASE_URL}/checkouts`, {
       method: 'POST',
@@ -168,7 +179,7 @@ export async function createDodoCheckout({
       throw new Error(`Dodo checkout creation failed: ${resp.status}`);
     }
 
-    data = (await resp.json()) as typeof data;
+    data = (await resp.json()) as DodoCheckoutSession;
   } finally {
     if (!data) {
       await prisma.order.delete({ where: { id: order.id } }).catch(() => {});
