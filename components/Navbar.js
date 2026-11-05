@@ -76,15 +76,22 @@ export default function Navbar() {
               );
             })}
             <div className="flex items-center gap-3">
-              {authed === false ? (
-                <Button variant="outline" size="sm" onClick={() => { router.push('/signup'); }}>
-                  Get API key
-                </Button>
-              ) : (
+              {authed === true && (
                 <Button variant="outline" size="sm" onClick={handleLogout}>
                   <LogOut className="w-3.5 h-3.5 mr-2" /> Sign out
                 </Button>
               )}
+              {authed === false && (
+                <>
+                  <Button variant="ghost" size="sm" onClick={() => { router.push('/login'); }}>
+                    Sign in
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => { router.push('/signup'); }}>
+                    Get API key
+                  </Button>
+                </>
+              )}
+              {authed === null && <div className="w-24 h-8" aria-hidden="true" />}
               <button
                 onClick={toggleTheme}
                 className="w-8 h-8 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
@@ -136,15 +143,21 @@ export default function Navbar() {
                 {dark ? 'Light mode' : 'Dark mode'}
               </button>
             </div>
-            <div className="pt-4">
-              {authed === false ? (
-                <Button variant="outline" className="w-full" onClick={() => { setIsOpen(false); router.push('/signup'); }}>
-                  Get API key
-                </Button>
-              ) : (
+            <div className="pt-4 space-y-3">
+              {authed === true && (
                 <Button variant="outline" className="w-full" onClick={handleLogout}>
                   <LogOut className="w-3.5 h-3.5 mr-2" /> Sign out
                 </Button>
+              )}
+              {authed === false && (
+                <>
+                  <Button variant="ghost" className="w-full" onClick={() => { setIsOpen(false); router.push('/login'); }}>
+                    Sign in
+                  </Button>
+                  <Button variant="outline" className="w-full" onClick={() => { setIsOpen(false); router.push('/signup'); }}>
+                    Get API key
+                  </Button>
+                </>
               )}
             </div>
           </div>

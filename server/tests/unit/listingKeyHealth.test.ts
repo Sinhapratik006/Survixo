@@ -10,7 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
-const { checkListingKey, inspectKeyFormat } = await import('../../src/services/listingKeyHealth.js');
+const { checkListingKey, inspectKeyFormat, probeHeaders } = await import('../../src/services/listingKeyHealth.js');
 
 const VALID_KEY = 'sk-live-abc123def456ghi789jkl012';
 
@@ -63,6 +63,26 @@ describe('inspectKeyFormat', () => {
   });
 });
 
+describe('probeHeaders', () => {
+  const KEY = 'sk-live-abc123def456ghi789jkl012';
+
+  it('sends the Anthropic version header only to Anthropic hosts', () => {
+    // Regression: NVIDIA's catalogue answers requests carrying this foreign
+    // header with an empty model list, failing the check for the wrong reason.
+    expect(probeHeaders(KEY, 'https://api.anthropic.com/v1')['anthropic-version']).toBe('2023-06-01');
+    expect(probeHeaders(KEY, 'https://api.anthropic.com')['anthropic-version']).toBe('2023-06-01');
+    expect(probeHeaders(KEY, 'https://integrate.api.nvidia.com/v1')['anthropic-version']).toBeUndefined();
+    expect(probeHeaders(KEY, 'https://api.openai.com/v1')['anthropic-version']).toBeUndefined();
+    expect(probeHeaders(KEY)['anthropic-version']).toBeUndefined();
+  });
+
+  it('always carries both key styles', () => {
+    const h = probeHeaders(KEY, 'https://api.openai.com/v1');
+    expect(h.authorization).toBe(`Bearer ${KEY}`);
+    expect(h['x-api-key']).toBe(KEY);
+  });
+});
+
 describe('checkListingKey', () => {
   it('accepts a key the provider authenticates', async () => {
     handler = (req, res) => {
@@ -85,8 +105,14 @@ describe('checkListingKey', () => {
 
   it('accepts a key even when the seller omits the base URL', async () => {
     handler = (req, res) => {
-      res.setHeader('content-type', 'application/json');
-      res.end(JSON.stringify({ data: [{ id: 'model-a' }] }));
+      // Auth-enforcing endpoint: the control probe (invalid key) gets a 401.
+      if (req.headers.authorization === `Bearer ${VALID_KEY}`) {
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify({ data: [{ id: 'model-a' }] }));
+        return;
+      }
+      res.statusCode = 401;
+      res.end('{}');
     };
 
     const result = await checkListingKey({
@@ -122,9 +148,14 @@ describe('checkListingKey', () => {
   });
 
   it('rejects a key that does not serve the models the seller listed', async () => {
-    handler = (_req, res) => {
-      res.setHeader('content-type', 'application/json');
-      res.end(JSON.stringify({ data: [{ id: 'gpt-4o' }] }));
+    handler = (req, res) => {
+      if (req.headers.authorization === `Bearer ${VALID_KEY}`) {
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify({ data: [{ id: 'gpt-4o' }] }));
+        return;
+      }
+      res.statusCode = 401;
+      res.end('{}');
     };
 
     const rejected = await checkListingKey({ apiKey: VALID_KEY, baseUrl, models: ['claude-3-opus'] });
@@ -168,7 +199,14 @@ describe('checkListingKey', () => {
     handler = (req, res) => {
       res.setHeader('content-type', 'application/json');
       if (req.url === '/key') {
-        res.end(JSON.stringify({ data: { label: 'seller-key' } }));
+        // Like OpenRouter's /key: demands a credential even though /models
+        // below is public.
+        if (req.headers.authorization === `Bearer ${VALID_KEY}`) {
+          res.end(JSON.stringify({ data: { label: 'seller-key' } }));
+          return;
+        }
+        res.statusCode = 401;
+        res.end('{}');
         return;
       }
       res.end(JSON.stringify({ data: [{ id: 'gpt-4o' }, { id: 'gpt-4o-mini' }] }));
@@ -243,5 +281,38 @@ describe('checkListingKey', () => {
     expect(result.detail).toContain('Alpha: rejected the key (HTTP 401)');
     expect(result.detail).toMatch(/Unreachable: .+/);
     expect(result.detail).not.toContain('Alpha, Unreachable');
+  });
+
+  it('rejects a key when the endpoint accepts a different invalid key too', async () => {
+    // NVIDIA-style public catalogue: /models answers 200 to everyone, so a
+    // garbage key looks identical to a real one. The differential control
+    // (same request, invalid key) must refuse to let it vouch.
+    handler = (_req, res) => {
+      res.setHeader('content-type', 'application/json');
+      res.end(JSON.stringify({ data: [{ id: 'public-model' }] }));
+    };
+
+    const result = await checkListingKey({ apiKey: VALID_KEY, baseUrl });
+    expect(result.ok).toBe(false);
+    expect(result.detail).toContain('accepted a different invalid key');
+  });
+
+  it('rejects a key when even the auth path answers every credential', async () => {
+    handler = (req, res) => {
+      res.setHeader('content-type', 'application/json');
+      if (req.url === '/key') {
+        res.end(JSON.stringify({ data: { label: 'anyone' } })); // no credential check
+        return;
+      }
+      res.end(JSON.stringify({ data: [{ id: 'gpt-4o' }] }));
+    };
+
+    const result = await checkListingKey({
+      apiKey: VALID_KEY,
+      probes: [{ name: 'Open-list provider', baseUrl, authPath: '/key' }],
+    });
+    expect(result.ok).toBe(false);
+    expect(result.detail).toContain('accepted a different invalid key');
+    expect(result.detail).toContain('Open-list provider');
   });
 });

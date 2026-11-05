@@ -51,6 +51,14 @@ const MAX_RESPONSE_BYTES = 1024 * 1024;
 const SAMPLE_MODELS = 5;
 /** Short keys are practically never real credentials (OpenAI alone is 51 chars). */
 const MIN_KEY_LENGTH = 12;
+/**
+ * Differential control probe: the seller's key already got a 200, so the same
+ * request is repeated with this deliberately invalid key. If the endpoint also
+ * accepts the invalid key it discriminates nothing (public model lists,
+ * presence-only auth) and its 200 cannot vouch for the seller's credential.
+ */
+const CONTROL_KEY = 'nx-keycheck-control-invalid-key';
+const CONTROL_REASON = 'accepted a different invalid key — this endpoint does not validate keys';
 
 export interface KeyFormatResult {
   ok: boolean;
@@ -135,21 +143,59 @@ function describeError(err: unknown): string {
   return String(err);
 }
 
-/** Both key styles: OpenAI-compatible gateways use Bearer, Anthropic uses x-api-key. */
-function probeHeaders(apiKey: string): Record<string, string> {
-  return {
+/**
+ * Both key styles: OpenAI-compatible gateways use Bearer, Anthropic uses
+ * x-api-key. The `anthropic-version` header is scoped to Anthropic hosts:
+ * Anthropic requires it, while other gateways misbehave when handed foreign
+ * headers — NVIDIA's catalogue answers an `anthropic-version` request with an
+ * empty model list, which would fail the check for the wrong reason.
+ */
+export function probeHeaders(apiKey: string, baseUrl?: string): Record<string, string> {
+  const headers: Record<string, string> = {
     accept: 'application/json',
     'user-agent': 'nexovra-keycheck/0.1',
     authorization: `Bearer ${apiKey}`,
     'x-api-key': apiKey,
-    // Anthropic rejects /v1/models without a version header even for valid
-    // keys; every other provider just ignores the extra header.
-    'anthropic-version': '2023-06-01',
   };
+  if (baseUrl && isAnthropicHost(baseUrl)) headers['anthropic-version'] = '2023-06-01';
+  return headers;
+}
+
+function isAnthropicHost(raw: string): boolean {
+  try {
+    return /(^|\.)anthropic\.com$/i.test(new URL(raw).host);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * True when the endpoint answers 2xx to a *different, invalid* key — i.e. it
+ * does not validate credentials and must not be allowed to vouch for the
+ * seller's key. Trouble reaching the control URL is inconclusive and lets the
+ * keyed probe's result stand (a public list responds to the control too, so
+ * this cannot mask the case the control exists for).
+ */
+async function acceptsInvalidKey(url: string): Promise<boolean> {
+  const { signal, clear } = deadline(PROBE_TIMEOUT_MS);
+  try {
+    const res = await safeFetch(url, {
+      method: 'GET',
+      headers: probeHeaders(CONTROL_KEY, url),
+      signal,
+    });
+    await res.body?.cancel().catch(() => undefined);
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clear();
+  }
 }
 
 async function probeProvider(probe: ProviderProbe, apiKey: string): Promise<ProbeOutcome> {
   const base = probe.baseUrl.replace(/\/+$/, '');
+  const headers = probeHeaders(apiKey, base);
 
   // Providers with a public /models list are authenticated here first: a 200
   // from the public list must never stand in for a working credential.
@@ -158,7 +204,7 @@ async function probeProvider(probe: ProviderProbe, apiKey: string): Promise<Prob
     try {
       const res = await safeFetch(`${base}${probe.authPath}`, {
         method: 'GET',
-        headers: probeHeaders(apiKey),
+        headers,
         signal,
       });
       await res.body?.cancel().catch(() => undefined);
@@ -173,6 +219,11 @@ async function probeProvider(probe: ProviderProbe, apiKey: string): Promise<Prob
     } finally {
       clear();
     }
+    // The auth path itself must demand credentials — an auth path anyone can
+    // call vouches for nothing.
+    if (await acceptsInvalidKey(`${base}${probe.authPath}`)) {
+      return { name: probe.name, baseUrl: base, ok: false, models: [], error: CONTROL_REASON };
+    }
   }
 
   // Most sellers paste the origin (`https://api.openai.com`), so retry the
@@ -186,7 +237,7 @@ async function probeProvider(probe: ProviderProbe, apiKey: string): Promise<Prob
     try {
       const res = await safeFetch(url, {
         method: 'GET',
-        headers: probeHeaders(apiKey),
+        headers,
         signal,
       });
       if (res.status === 401 || res.status === 403) {
@@ -200,7 +251,17 @@ async function probeProvider(probe: ProviderProbe, apiKey: string): Promise<Prob
       }
       const text = await readCapped(res, MAX_RESPONSE_BYTES);
       const ids = parseModelIds(text);
-      if (ids.length) return { name: probe.name, baseUrl: base, ok: true, models: ids };
+      if (ids.length) {
+        // When there is no auth path, this list is the only evidence the key
+        // is live — so prove the endpoint actually checks keys first. With an
+        // auth path the credential was already proven there (and controlling
+        // it), and a public catalogue is expected.
+        if (!probe.authPath && (await acceptsInvalidKey(url))) {
+          lastError = CONTROL_REASON;
+          continue;
+        }
+        return { name: probe.name, baseUrl: base, ok: true, models: ids };
+      }
       lastError = 'the provider returned an empty model list';
     } catch (err) {
       lastError = describeError(err);
@@ -294,6 +355,8 @@ function firstTargetFailure(outcome: ProbeOutcome, rawBaseUrl: string): string {
   const host = hostOf(rawBaseUrl);
   if (outcome.status === 401 || outcome.status === 403)
     return `The provider at ${host} rejected this key (HTTP ${outcome.status}). Check that the key is active and has credits.`;
+  if (outcome.error === CONTROL_REASON)
+    return `The endpoint at ${host} also accepted a different invalid key, so it does not validate credentials and cannot verify this one. Set the base URL to an API that requires valid keys.`;
   if (outcome.error === 'the request timed out')
     return `Timed out reaching ${host} — could not verify the key. Check the API base URL and try again.`;
   return `Could not verify the key at ${host}: ${outcome.error ?? 'no response'}.`;
