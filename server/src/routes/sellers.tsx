@@ -396,7 +396,7 @@ sellersRouter.get('/payouts', requirePermission('seller:view'), async (req, res)
   });
 });
 
-const payoutSchema = z.object({ amountUsd: z.number().min(1).max(1_000_000), destination: z.string().trim().max(200).optional() });
+const payoutSchema = z.object({ amountUsd: z.number().min(25, 'The minimum payout is $25.00').max(1_000_000), destination: z.string().trim().max(200).optional() });
 
 sellersRouter.post('/payouts', requirePermission('seller:manage'), rateLimit({ name: 'payout', windowSeconds: 3600, max: 5, key: userKey }), async (req, res) => {
   const body = parse(payoutSchema, req.body);

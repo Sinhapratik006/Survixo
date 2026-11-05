@@ -122,12 +122,20 @@ export default function SellerDashboard() {
                   Manage your API key listings and earnings
                 </p>
               </div>
-              <Button
-                variant="primary"
-                onClick={() => window.location.href = '/seller/create'}
-              >
-                Create Key Listing
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => window.location.href = '/seller/payouts'}
+                >
+                  Payouts
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => window.location.href = '/seller/create'}
+                >
+                  Create Key Listing
+                </Button>
+              </div>
             </div>
           </div>
 

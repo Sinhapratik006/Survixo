@@ -68,14 +68,14 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden py-20 md:py-32">
-        <div className="absolute inset-0 -z-10 bg-[url('https://images.unsplash.com/photo-1677442136019-21780ecad995?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')] bg-cover bg-center opacity-8 dark:opacity-15" />
+        <div className="absolute inset-0 -z-10 bg-[url('https://images.unsplash.com/photo-1677442136019-21780ecad995?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')] bg-cover bg-center opacity-[0.08] dark:opacity-[0.15]" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-transparent to-canvas dark:to-navy-950" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10">
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-brand-500/20 blur-[120px]" />
           <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-500/20 blur-[120px]" />
         </div>
         <div className="container-page">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid xl:grid-cols-2 gap-10 xl:gap-12 items-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -89,7 +89,7 @@ export default function HomePage() {
                 </span>
                 Public beta now open
               </div>
-              <h1 className="text-[4rem] md:text-[5.5rem] font-extrabold text-slate-900 dark:text-white tracking-tight leading-none">
+              <h1 className="text-[2.5rem] sm:text-[4rem] md:text-[5rem] xl:text-[5.5rem] font-extrabold text-slate-900 dark:text-white tracking-tight leading-[1.08] sm:leading-none">
                 AI inference,{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 via-indigo-500 to-purple-600">
                   intelligently routed.
@@ -107,7 +107,7 @@ export default function HomePage() {
                   <Play className="w-4 h-4" /> View docs
                 </Button>
               </div>
-              <div className="mt-8 flex items-center gap-6 text-xs text-slate-500 dark:text-slate-500">
+              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-slate-500 dark:text-slate-500">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-emerald-500" />
                   <span>SOC 2 Type II compliant</span>
@@ -126,9 +126,9 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative"
+              className="relative max-w-2xl mx-auto xl:max-w-none"
             >
-              <div className="relative z-10 glass p-8 rounded-3xl shadow-2xl border border-white/30 dark:border-navy-700/30">
+              <div className="relative z-10 glass p-5 sm:p-8 rounded-3xl shadow-2xl border border-white/30 dark:border-navy-700/30">
                 <div className="flex justify-between items-start mb-8">
                   <div className="flex items-center gap-2">
                     <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-brand-600 dark:text-brand-400 text-lg font-bold">
@@ -152,7 +152,7 @@ export default function HomePage() {
                   ].map((stat, i) => (
                     <div
                       key={stat.label}
-                      className={`p-4 rounded-xl border ${
+                      className={`p-3 sm:p-4 rounded-xl border ${
                         stat.color === 'brand'
                           ? 'bg-brand-50 dark:bg-brand-900/20 border-brand-100/30 dark:border-brand-800/30'
                           : stat.color === 'blue'
@@ -160,7 +160,7 @@ export default function HomePage() {
                           : 'bg-purple-50 dark:bg-purple-900/20 border-purple-100/30 dark:border-purple-800/30'
                       }`}
                     >
-                      <div className="text-2xl font-bold">
+                      <div className="text-xl sm:text-2xl font-bold">
                         {(stat.color === 'brand'
                           ? 'text-brand-600 dark:text-brand-400'
                           : stat.color === 'blue'
@@ -254,7 +254,7 @@ export default function HomePage() {
       {/* Stats */}
       <section className="py-24 bg-slate-50 dark:bg-navy-900/30 border-y border-slate-200/50 dark:border-navy-800/30">
         <div className="container-page">
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
             {statItems.map((stat, i) => (
               <div key={stat.label} className="text-center" style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className="flex items-center justify-center gap-1.5 mb-2">

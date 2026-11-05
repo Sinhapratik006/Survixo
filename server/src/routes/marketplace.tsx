@@ -43,6 +43,7 @@ import { audit } from '../services/audit.js';
 import { emitEvent } from '../services/events.js';
 import { clientIp } from '../services/sessions.js';
 import { buyerPriceCents, creditValueCentsFromPrice } from '../lib/pricing.js';
+import { microsToUsd } from '../lib/money.js';
 import { checkListingKey } from '../services/listingKeyHealth.js';
 
 export const marketplaceRouter = Router();
@@ -690,12 +691,92 @@ marketplaceRouter.get('/my-listings/:id', async (req, res) => {
   });
 });
 
+// ───────────── Seller: Payout summary ─────────────
+
+export const MIN_PAYOUT_USD = 25;
+
+/** Date of the next weekly settlement run (every Friday, UTC). */
+function nextWeeklyPayoutDate(): Date {
+  const now = new Date();
+  const daysUntilFriday = (5 - now.getUTCDay() + 7) % 7;
+  const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysUntilFriday));
+  return next;
+}
+
+marketplaceRouter.get('/payout-summary', async (req, res) => {
+  const orgId = req.org!.id;
+  const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000);
+
+  const [org, pending, paid, last7] = await Promise.all([
+    prisma.organization.findUniqueOrThrow({
+      where: { id: orgId },
+      select: { sellerBalanceMicros: true },
+    }),
+    prisma.payout.aggregate({
+      where: { orgId, status: { in: ['REQUESTED', 'PROCESSING'] } },
+      _sum: { amountMicros: true },
+      _count: { _all: true },
+    }),
+    prisma.order.aggregate({
+      where: { listing: { sellerOrgId: orgId }, status: 'PAID' },
+      _sum: { sellerEarningCents: true, amountCents: true },
+      _count: { _all: true },
+    }),
+    prisma.order.aggregate({
+      where: { listing: { sellerOrgId: orgId }, status: 'PAID', createdAt: { gte: sevenDaysAgo } },
+      _sum: { sellerEarningCents: true },
+      _count: { _all: true },
+    }),
+  ]);
+
+  res.json({
+    availableBalanceUsd: microsToUsd(org.sellerBalanceMicros),
+    pendingPayoutUsd: microsToUsd(pending._sum.amountMicros),
+    pendingPayoutCount: pending._count._all,
+    lifetimeEarningsUsd: (paid._sum.sellerEarningCents ?? 0) / 100,
+    grossSalesUsd: (paid._sum.amountCents ?? 0) / 100,
+    paidSalesCount: paid._count._all,
+    last7DaysEarningsUsd: (last7._sum.sellerEarningCents ?? 0) / 100,
+    last7DaysSalesCount: last7._count._all,
+    minPayoutUsd: MIN_PAYOUT_USD,
+    schedule: 'weekly',
+    payoutDay: 'Friday',
+    nextPayoutDate: nextWeeklyPayoutDate().toISOString(),
+    // No automated on-chain disbursement provider is wired up yet: payouts are
+    // recorded and funds reserved, then settled manually in the weekly batch.
+    payoutProviderConfigured: false,
+  });
+});
+
 // ───────────── Seller: Crypto payout account ─────────────
 
-const payoutAccountSchema = z.object({
-  walletAddress: z.string().trim().min(1).max(100),
-  network: z.nativeEnum(PayoutNetwork).default(PayoutNetwork.ETHEREUM),
-});
+// Per-network address format checks. These validate shape only — ownership is
+// proven during the manual ops review before a verified payout account is
+// allowed to receive funds, so accepting a well-formed-but-wrong address is
+// caught downstream rather than silently paid.
+const WALLET_PATTERNS = {
+  [PayoutNetwork.ETHEREUM]: /^0x[a-fA-F0-9]{40}$/,
+  [PayoutNetwork.POLYGON]: /^0x[a-fA-F0-9]{40}$/,
+  [PayoutNetwork.ARBITRUM]: /^0x[a-fA-F0-9]{40}$/,
+  [PayoutNetwork.SOLANA]: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
+  [PayoutNetwork.BITCOIN]: /^(bc1[02-9ac-hj-np-z]{11,71}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$/,
+} as const satisfies Record<PayoutNetwork, RegExp>;
+
+const payoutAccountSchema = z
+  .object({
+    walletAddress: z.string().trim().min(8).max(100),
+    network: z.nativeEnum(PayoutNetwork).default(PayoutNetwork.ETHEREUM),
+  })
+  .superRefine((value, ctx) => {
+    const pattern = WALLET_PATTERNS[value.network];
+    if (!pattern.test(value.walletAddress)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['walletAddress'],
+        message: `That doesn't look like a valid ${value.network} wallet address`,
+      });
+    }
+  });
 
 marketplaceRouter.get('/payout-account', async (req, res) => {
   const account = await prisma.cryptoPayoutAccount.findUnique({
