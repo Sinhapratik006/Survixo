@@ -65,7 +65,7 @@ export default function CalculatorPage() {
         <div className="container-page">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
             <div className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+              <DollarSign className="h-5 w-5 text-slate-600 dark:text-slate-300" />
               <div>
                 <h1 className="text-h1 text-slate-900 dark:text-white mb-1">Savings calculator</h1>
                 <p className="text-slate-600 dark:text-slate-300">
@@ -80,7 +80,7 @@ export default function CalculatorPage() {
             <div className="lg:col-span-4 space-y-6">
               <Card className="p-6">
                 <div className="flex items-center gap-2 mb-6">
-                  <Layers className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                  <Layers className="w-4 h-4 text-slate-600 dark:text-slate-300" />
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Select a model</h3>
                 </div>
                 <div className="space-y-3">
@@ -103,7 +103,7 @@ export default function CalculatorPage() {
                             {m.provider.name} · {disc > 0 ? disc.toFixed(0) + '% cheaper' : ''}
                           </div>
                         </div>
-                        <span className={`text-xs font-bold ${disc > 90 ? 'text-emerald-600 dark:text-emerald-400' : 'text-brand-600 dark:text-brand-400'}`}>
+                        <span className={`text-xs font-bold ${disc > 90 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300'}`}>
                           −{disc.toFixed(0)}%
                         </span>
                       </button>
@@ -148,7 +148,7 @@ export default function CalculatorPage() {
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Monthly estimate</h3>
-                    <span className="text-xs font-medium text-brand-600 dark:text-brand-400">
+                    <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
                       Direct vs. Survixo
                     </span>
                   </div>
@@ -166,12 +166,12 @@ export default function CalculatorPage() {
                       </div>
                     </div>
                     <div className="p-4 rounded-xl bg-brand-50/50 dark:bg-brand-900/10 border border-brand-200/50 dark:border-brand-900/30">
-                      <div className="text-xs font-medium text-brand-700 dark:text-brand-400 uppercase tracking-wider mb-1">
+                      <div className="text-xs font-medium text-brand-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                         Survixo
                       </div>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-2xl font-bold text-brand-600 dark:text-brand-400">${surplusBill.toFixed(2)}</span>
-                        <span className="text-xs text-brand-600 dark:text-brand-400">/ month</span>
+                        <span className="text-2xl font-bold text-slate-600 dark:text-slate-300">${surplusBill.toFixed(2)}</span>
+                        <span className="text-xs text-slate-600 dark:text-slate-300">/ month</span>
                       </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         @ active market price · {surplusOut.toFixed(4)} / 1M output
@@ -212,7 +212,7 @@ export default function CalculatorPage() {
                     <Card key={m.id} className="p-4">
                       <div className="flex items-center justify-between mb-3">
                         <div className="text-sm font-medium text-slate-900 dark:text-white">{m.provider.name}</div>
-                        <span className={`text-xs font-bold ${disc > 90 ? 'text-emerald-600 dark:text-emerald-400' : 'text-brand-600 dark:text-brand-400'}`}>
+                        <span className={`text-xs font-bold ${disc > 90 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300'}`}>
                           −{disc.toFixed(0)}%
                         </span>
                       </div>

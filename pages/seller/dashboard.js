@@ -100,7 +100,7 @@ export default function SellerDashboard() {
       <div className="min-h-screen bg-canvas dark:bg-navy-950 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">Checking your session…</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">Checking your session…</p>
         </div>
       </div>
     );
@@ -118,7 +118,7 @@ export default function SellerDashboard() {
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                   Seller Dashboard
                 </h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-slate-600 dark:text-slate-300">
                   Manage your API key listings and earnings
                 </p>
               </div>
@@ -141,15 +141,15 @@ export default function SellerDashboard() {
 
           {loading ? (
             <div className="h-96 flex items-center justify-center">
-              <span className="text-slate-500 dark:text-slate-400">Loading listings…</span>
+              <span className="text-slate-600 dark:text-slate-300">Loading listings…</span>
             </div>
           ) : listings.length === 0 ? (
             <div className="py-12 text-center">
               <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-navy-800/30 flex items-center justify-center mx-auto mb-3">
-                <span className="text-3xl text-slate-500 dark:text-slate-400">••••</span>
+                <span className="text-3xl text-slate-600 dark:text-slate-300">••••</span>
               </div>
               <h3 className="text-sm font-medium text-slate-900 dark:text-white">No listings yet</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-slate-600 dark:text-slate-300">
                 Create your first API key listing to start selling on the marketplace.
               </p>
               <Button
@@ -176,11 +176,11 @@ export default function SellerDashboard() {
                     <h3 className="text-base font-medium text-slate-900 dark:text-white truncate">
                       {listing.title}
                     </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                    <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 line-clamp-2">
                       {listing.description || 'No description'}
                     </p>
                     <div className="mt-2 flex items-baseline gap-2">
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                      <span className="text-xs text-slate-600 dark:text-slate-300">
                         You get {formatUsd(sellerPayoutFromBuyerPrice(listing.priceUsd))} · buyer pays {formatUsd(listing.priceUsd)}
                       </span>
                       <Badge

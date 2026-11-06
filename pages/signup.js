@@ -39,7 +39,7 @@ export default function SignupPage() {
               <div className="absolute inset-0 bg-white/10" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Create your account</h2>
-            <p className="text-slate-500 dark:text-slate-400">
+            <p className="text-slate-600 dark:text-slate-300">
               Start building with Nexovra today
             </p>
           </div>
@@ -82,11 +82,11 @@ export default function SignupPage() {
                 type="checkbox"
                 id="terms"
                 defaultChecked
-                className="mt-1 rounded border-slate-300 dark:border-navy-600 text-brand-600 focus:ring-brand-500"
+                className="mt-1 rounded border-slate-300 dark:border-navy-600 text-slate-600 focus:ring-brand-500"
               />
-              <label htmlFor="terms" className="text-sm text-slate-600 dark:text-slate-400 leading-none">
+              <label htmlFor="terms" className="text-sm text-slate-600 dark:text-slate-300 leading-none">
                 I agree to the{' '}
-                <Link href="/legal" className="text-brand-600 dark:text-brand-400 font-medium hover:underline transition-colors">
+                <Link href="/legal" className="text-slate-600 dark:text-slate-300 font-medium hover:underline transition-colors">
                   Terms of Service
                 </Link>
               </label>
@@ -96,9 +96,9 @@ export default function SignupPage() {
             </Button>
           </form>
 
-          <p className="mt-10 text-center text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-10 text-center text-sm text-slate-600 dark:text-slate-300">
             Already have an account?{' '}
-            <Link href="/login" className="text-brand-600 dark:text-brand-400 font-medium hover:underline transition-colors">
+            <Link href="/login" className="text-slate-600 dark:text-slate-300 font-medium hover:underline transition-colors">
               Sign in
             </Link>
           </p>

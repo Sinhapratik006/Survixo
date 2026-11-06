@@ -132,14 +132,14 @@ export default function SellerCreatePage() {
     }
   };
 
-  const labelCls = 'block text-sm font-medium text-slate-600 dark:text-slate-400 uppercase tracking-tighter mb-2';
+  const labelCls = 'block text-sm font-medium text-slate-600 dark:text-slate-300 uppercase tracking-tighter mb-2';
 
   if (checkingAuth) {
     return (
       <div className="min-h-screen bg-canvas dark:bg-navy-950 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">Checking your session…</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">Checking your session…</p>
         </div>
       </div>
     );
@@ -193,7 +193,7 @@ export default function SellerCreatePage() {
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
               Create API Key Listing
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+            <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
               Your key is encrypted at rest and stays hidden until someone buys it.
             </p>
 
@@ -236,7 +236,7 @@ export default function SellerCreatePage() {
                   placeholder="e.g. 100"
                   required
                 />
-                <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">
+                <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-600">
                   Face value of the API credits you are selling — we buy them at {CREDIT_BUY_PCT}% and
                   list them for buyers at {CREDIT_SELL_PCT}%.
                 </p>
@@ -248,15 +248,15 @@ export default function SellerCreatePage() {
                       </span>
                       <span className="font-medium">${creditNum.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-slate-500 dark:text-slate-400 mt-1">
+                    <div className="flex justify-between text-slate-600 dark:text-slate-300 mt-1">
                       <span>We buy them at {CREDIT_BUY_PCT}%</span>
                       <span>${payoutUsd.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-slate-500 dark:text-slate-400 mt-1">
+                    <div className="flex justify-between text-slate-600 dark:text-slate-300 mt-1">
                       <span>Buyers pay {CREDIT_SELL_PCT}%</span>
                       <span>${buyerUsd.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-slate-500 dark:text-slate-400 mt-1">
+                    <div className="flex justify-between text-slate-600 dark:text-slate-300 mt-1">
                       <span>Platform keeps {CREDIT_PLATFORM_MARGIN_PCT}%</span>
                       <span>${marginUsd.toFixed(2)}</span>
                     </div>
@@ -275,7 +275,7 @@ export default function SellerCreatePage() {
                   value={models}
                   onChange={(e) => setModels(e.target.value)}
                 />
-                <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">Comma-separated model names</p>
+                <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-600">Comma-separated model names</p>
               </div>
 
               <div>
@@ -304,13 +304,13 @@ export default function SellerCreatePage() {
                 </div>
 
                 {maskedPreview && (
-                  <p className="mt-1.5 font-mono text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-1.5 font-mono text-xs text-slate-600 dark:text-slate-300">
                     Buyers will see: {maskedPreview}
                   </p>
                 )}
 
                 {keyCheck.state === 'checking' && (
-                  <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     Checking key health against the provider…
                   </p>
@@ -334,7 +334,7 @@ export default function SellerCreatePage() {
                 <div className="mt-4">
                   <label className={labelCls}>
                     API base URL{' '}
-                    <span className="normal-case text-slate-400 dark:text-slate-500">(optional)</span>
+                    <span className="normal-case text-slate-400 dark:text-slate-600">(optional)</span>
                   </label>
                   <Input
                     placeholder="https://api.openai.com/v1"
@@ -343,7 +343,7 @@ export default function SellerCreatePage() {
                     maxLength={300}
                     spellCheck={false}
                   />
-                  <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">
+                  <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-600">
                     Where your key lives — we verify it there. A bare host like{' '}
                     <span className="font-mono">api.openai.com/v1</span> is fine (https:// assumed).
                     Leave it blank and we check the major providers automatically.

@@ -26,7 +26,7 @@ export default function LegalPage() {
             <div className="space-y-8">
               <section className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center text-brand-600 dark:text-brand-400 text-xs font-bold shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs font-bold shrink-0 mt-0.5">
                     1
                   </div>
                   <div>
@@ -42,7 +42,7 @@ export default function LegalPage() {
 
               <section className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center text-brand-600 dark:text-brand-400 text-xs font-bold shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs font-bold shrink-0 mt-0.5">
                     2
                   </div>
                   <div>
@@ -57,7 +57,7 @@ export default function LegalPage() {
 
               <section className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center text-brand-600 dark:text-brand-400 text-xs font-bold shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs font-bold shrink-0 mt-0.5">
                     3
                   </div>
                   <div>
@@ -72,7 +72,7 @@ export default function LegalPage() {
 
               <section className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center text-brand-600 dark:text-brand-400 text-xs font-bold shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs font-bold shrink-0 mt-0.5">
                     4
                   </div>
                   <div>
@@ -88,7 +88,7 @@ export default function LegalPage() {
 
               <section className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center text-brand-600 dark:text-brand-400 text-xs font-bold shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs font-bold shrink-0 mt-0.5">
                     5
                   </div>
                   <div>

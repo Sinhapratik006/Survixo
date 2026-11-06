@@ -73,7 +73,7 @@ export default function KeysPage() {
       <div className="border-b border-slate-200/60 dark:border-navy-700/30 bg-white/60 dark:bg-navy-950/60 backdrop-blur-md sticky top-0 z-20">
         <div className="container-page py-4">
           <h1 className="text-h1 text-slate-900 dark:text-white">API keys</h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             One key gives you access to every model in the marketplace.
           </p>
         </div>
@@ -93,7 +93,7 @@ export default function KeysPage() {
         </div>
 
         <Card className="overflow-hidden shadow-sm border border-slate-200 dark:border-navy-700">
-          <div className="border-b border-slate-100 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-800/30 px-6 py-4 flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <div className="border-b border-slate-100 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-800/30 px-6 py-4 flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
             <div className="flex items-center gap-2">
               <Key className="h-3.5 w-3.5" />
               <span>API keys</span>
@@ -101,14 +101,14 @@ export default function KeysPage() {
           </div>
           <div className="divide-y divide-slate-100 dark:divide-navy-700">
             {loading ? (
-              <div className="px-6 py-16 text-center text-slate-500">Loading keys…</div>
+              <div className="px-6 py-16 text-center text-slate-600">Loading keys…</div>
             ) : keys.length === 0 ? (
               <div className="px-6 py-16 text-center">
-                <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-navy-800/30 flex items-center justify-center mx-auto mb-3 text-slate-500">
+                <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-navy-800/30 flex items-center justify-center mx-auto mb-3 text-slate-600">
                   <Key className="h-6 w-6" />
                 </div>
                 <h3 className="text-sm font-medium text-slate-900 dark:text-white">No API keys yet</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-slate-600 dark:text-slate-300">
                   Create your first key to start calling the marketplace API.
                 </p>
                 <Button variant="outline" onClick={() => setOpenCreate(true)} className="mt-4">
@@ -124,7 +124,7 @@ export default function KeysPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-slate-900 dark:text-white truncate">{key.name}</div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                      <div className="text-xs text-slate-600 dark:text-slate-300 truncate">
                         {key.project ? `${key.project.name} (${key.project.environment})` : 'Personal workspace'}
                       </div>
                     </div>
@@ -132,7 +132,7 @@ export default function KeysPage() {
                   <div className="flex items-center gap-2">
                     <div className="hidden md:flex flex-col items-end gap-1">
                       <span className="text-xs font-mono text-slate-900 dark:text-white truncate max-w-xs">{key.maskedKey}</span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                      <span className="text-xs text-slate-600 dark:text-slate-300">
                         {key.spentUsd > 0 ? `Spent: ${formatUsd(key.spentUsd)}` : 'No spend yet'}
                       </span>
                     </div>
@@ -150,7 +150,7 @@ export default function KeysPage() {
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
-                    <span className={`text-xs font-bold px-2 py-1 rounded ${key.status === 'active' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100/30 dark:border-emerald-900/30' : 'bg-slate-200 dark:bg-navy-700 text-slate-500 border border-slate-200 dark:border-navy-700'}`}>
+                    <span className={`text-xs font-bold px-2 py-1 rounded ${key.status === 'active' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100/30 dark:border-emerald-900/30' : 'bg-slate-200 dark:bg-navy-700 text-slate-600 border border-slate-200 dark:border-navy-700'}`}>
                       {key.status}
                     </span>
                   </div>
@@ -162,10 +162,10 @@ export default function KeysPage() {
 
         <div className="mt-8 Card p-6" style={{ border: '1px solid', borderColor: 'hsl(var(--border))' }}>
           <div className="flex items-center gap-3 mb-4">
-            <Banknote className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+            <Banknote className="h-5 w-5 text-slate-600 dark:text-slate-300" />
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">How it works</h3>
           </div>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-300">
             Your API key is used as a Bearer token against{' '}
             <code className="font-mono text-xs bg-slate-100 dark:bg-navy-800 px-1.5 py-0.5 rounded">
               https://api.surplusintelligence.ai/v1
@@ -186,13 +186,13 @@ export default function KeysPage() {
         <div className="relative bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-2xl mx-4 md:mx-10 my-4 md:my-0 max-w-md z-50">
           <div className="p-6 border-b border-slate-100 dark:border-navy-700">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">Create API key</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
               Create a new key to authenticate your requests to the marketplace API.
             </p>
           </div>
           <form onSubmit={handleCreate} className="p-6 space-y-4">
             <div className="space-y-2">
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-tighter">Key name</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 uppercase tracking-tighter">Key name</label>
               <Input
                 placeholder="e.g. Production app"
                 value={createName}
@@ -201,7 +201,7 @@ export default function KeysPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-tighter">Spend limit (USD/month, optional)</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 uppercase tracking-tighter">Spend limit (USD/month, optional)</label>
               <Input
                 type="number"
                 step="0.01"
@@ -234,11 +234,11 @@ export default function KeysPage() {
         <div className="relative bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-2xl mx-4 md:mx-10 my-4 md:my-0 max-w-md z-50">
           <div className="p-6 border-b border-slate-100 dark:border-navy-700">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">Your new API key</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Copy this key now. It will not be shown again.</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">Copy this key now. It will not be shown again.</p>
           </div>
           <div className="p-6">
             <div className="flex items-center gap-2 p-3 rounded-lg bg-slate-100 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 mb-4">
-              <span className="text-xs font-mono text-slate-500 dark:text-slate-400">sk_live_</span>
+              <span className="text-xs font-mono text-slate-600 dark:text-slate-300">sk_live_</span>
               <span className="text-xs font-mono text-slate-900 dark:text-white select-all">{secretValue}</span>
               <Button variant="ghost" size="icon" onClick={() => {
                 navigator.clipboard.writeText('sk_live_' + secretValue);
@@ -246,7 +246,7 @@ export default function KeysPage() {
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-slate-600 dark:text-slate-300">
               Treat this like a password. Never commit it to version control. Store it in an environment variable.
             </p>
           </div>
@@ -269,7 +269,7 @@ export default function KeysPage() {
         <div className="relative bg-white dark:bg-navy-900 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-2xl mx-4 md:mx-10 my-4 md:my-0 max-w-md z-50">
           <div className="p-6 border-b border-slate-100 dark:border-navy-700">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">Revoke API key?</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
               This action cannot be undone. Any application using this key will stop working immediately.
             </p>
           </div>

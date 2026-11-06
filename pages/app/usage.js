@@ -41,7 +41,7 @@ export default function UsagePage() {
     return (
       <div className="min-h-screen bg-canvas dark:bg-navy-950">
         <Navbar />
-        <section className="py-10"><div className="container-page"><h1 className="text-h1 text-slate-900 dark:text-white">Usage</h1><p className="text-slate-500 dark:text-slate-400">Loading…</p></div></section>
+        <section className="py-10"><div className="container-page"><h1 className="text-h1 text-slate-900 dark:text-white">Usage</h1><p className="text-slate-600 dark:text-slate-300">Loading…</p></div></section>
         <Footer />
       </div>
     );
@@ -53,7 +53,7 @@ export default function UsagePage() {
       case 'SUCCESS': return 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/10';
       case 'FAILED': return 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/10';
       case 'REJECTED': return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/10';
-      default: return 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-navy-800/50';
+      default: return 'text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-navy-800/50';
     }
   };
 
@@ -64,7 +64,7 @@ export default function UsagePage() {
       <div className="border-b border-slate-200/60 dark:border-navy-700/30 bg-white/60 dark:bg-navy-950/60 backdrop-blur-md sticky top-0 z-20">
         <div className="container-page py-4">
           <h1 className="text-h1 text-slate-900 dark:text-white">Usage</h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400">View your inference requests, costs, and savings.</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">View your inference requests, costs, and savings.</p>
         </div>
       </div>
 
@@ -91,7 +91,7 @@ export default function UsagePage() {
         {/* Totals */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mb-8">
           <Card className="p-6">
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-tighter mb-2">Last {days}d spend</p>
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-300 uppercase tracking-tighter mb-2">Last {days}d spend</p>
             <div className="flex items-baseline gap-1">
               <span className="text-3xl font-bold text-slate-900 dark:text-white">${formatUsd(l30.costUsd ?? 0)}</span>
               {l30.baselineUsd && l30.costUsd && (
@@ -102,19 +102,19 @@ export default function UsagePage() {
             </div>
           </Card>
           <Card className="p-6">
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-tighter mb-2">Baseline spend</p>
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-300 uppercase tracking-tighter mb-2">Baseline spend</p>
             <div className="flex items-baseline gap-1">
               <span className="text-3xl font-bold text-slate-900 dark:text-white line-through">${formatUsd(l30.baselineUsd ?? 0)}</span>
             </div>
           </Card>
           <Card className="p-6">
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-tighter mb-2">Requests</p>
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-300 uppercase tracking-tighter mb-2">Requests</p>
             <div className="flex items-baseline gap-1">
               <span className="text-3xl font-bold text-slate-900 dark:text-white">{l30.requests?.toLocaleString() ?? '0'}</span>
             </div>
           </Card>
           <Card className="p-6">
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-tighter mb-2">Tokens</p>
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-300 uppercase tracking-tighter mb-2">Tokens</p>
             <div className="flex items-baseline gap-1">
               <span className="text-3xl font-bold text-slate-900 dark:text-white">{formatTokens(l30.tokens ?? 0)}</span>
             </div>
@@ -164,14 +164,14 @@ export default function UsagePage() {
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{r.requestedModel}</p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">{r.seller ?? '—'} • {r.source}</p>
+                            <p className="text-xs text-slate-600 dark:text-slate-300">{r.seller ?? '—'} • {r.source}</p>
                           </div>
                         </div>
                         <div className="text-right">
                           <span className="text-xs font-medium text-slate-900 dark:text-white">${r.costUsd.toFixed(4)}</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                         <span className={cn('px-2 py-0.5 rounded text-[10px] font-medium', statusColor(r.status))}>
                           {r.status}
                         </span>
@@ -181,7 +181,7 @@ export default function UsagePage() {
                     </div>
                   ))
                 ) : (
-                  <div className="p-6 text-center text-slate-500 dark:text-slate-400 text-sm">No recent requests.</div>
+                  <div className="p-6 text-center text-slate-600 dark:text-slate-300 text-sm">No recent requests.</div>
                 )}
               </div>
             </Card>
@@ -192,18 +192,18 @@ export default function UsagePage() {
         <Card className="mt-8 overflow-hidden">
           <div className="p-6 border-b border-slate-100 dark:border-navy-800/30">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Spend by model</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Last {days} days</p>
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">Last {days} days</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead>
                 <tr className="border-b border-slate-100 dark:border-navy-700">
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Model</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Spend</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Baseline</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Savings</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Requests</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Tokens</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase">Model</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase">Spend</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase">Baseline</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase">Savings</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase">Requests</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase">Tokens</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-navy-700">
@@ -215,10 +215,10 @@ export default function UsagePage() {
                         <div className="text-sm font-medium text-slate-900 dark:text-white truncate">{m.modelId}</div>
                       </td>
                       <td className="px-6 py-3 text-right text-sm font-medium text-slate-900 dark:text-white">${m.costUsd.toFixed(4)}</td>
-                      <td className="px-6 py-3 text-right text-sm text-slate-500 dark:text-slate-400 line-through">${m.baselineUsd.toFixed(4)}</td>
+                      <td className="px-6 py-3 text-right text-sm text-slate-600 dark:text-slate-300 line-through">${m.baselineUsd.toFixed(4)}</td>
                       <td className="px-6 py-3 text-right text-sm font-medium text-emerald-600 dark:text-emerald-400">−${savings.toFixed(4)}</td>
-                      <td className="px-6 py-3 text-right text-sm text-slate-500 dark:text-slate-400">{m.requests}</td>
-                      <td className="px-6 py-3 text-right text-sm text-slate-500 dark:text-slate-400 font-mono">{formatTokens(m.tokens)}</td>
+                      <td className="px-6 py-3 text-right text-sm text-slate-600 dark:text-slate-300">{m.requests}</td>
+                      <td className="px-6 py-3 text-right text-sm text-slate-600 dark:text-slate-300 font-mono">{formatTokens(m.tokens)}</td>
                     </tr>
                   );
                 })}

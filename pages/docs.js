@@ -86,7 +86,7 @@ export default function DocsPage() {
                 className="group p-6"
                 style={{ animationDelay: `${i * 0.08}s` }}
               >
-                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-navy-800/30 flex items-center justify-center text-brand-600 dark:text-brand-400 mb-5 group-hover:bg-brand-50 dark:group-hover:bg-brand-900/20 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-navy-800/30 flex items-center justify-center text-slate-600 dark:text-slate-300 mb-5 group-hover:bg-brand-50 dark:group-hover:bg-brand-900/20 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
                   <s.icon className="w-5 h-5" />
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">{s.title}</h3>
@@ -95,7 +95,7 @@ export default function DocsPage() {
                 </p>
                 <Link
                   href={s.href}
-                  className="text-xs font-semibold text-brand-600 dark:text-brand-400 flex items-center gap-1 hover:gap-2 transition-all"
+                  className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1 hover:gap-2 transition-all"
                 >
                   Read guide <ArrowRight className="w-3 h-3" />
                 </Link>

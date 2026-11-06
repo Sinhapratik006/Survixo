@@ -45,7 +45,7 @@ export default function LoginPage() {
               <div className="absolute inset-0 bg-white/10" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Welcome back</h2>
-            <p className="text-slate-500 dark:text-slate-400">
+            <p className="text-slate-600 dark:text-slate-300">
               Sign in to your Nexovra account
             </p>
           </div>
@@ -76,11 +76,11 @@ export default function LoginPage() {
               className="mb-6"
             />
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer select-none">
-                <input type="checkbox" className="rounded border-slate-300 dark:border-navy-600 text-brand-600 focus:ring-brand-500" />
+              <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 cursor-pointer select-none">
+                <input type="checkbox" className="rounded border-slate-300 dark:border-navy-600 text-slate-600 focus:ring-brand-500" />
                 Remember me
               </label>
-              <a href="#" className="text-sm text-brand-600 dark:text-brand-400 font-medium hover:underline transition-colors">
+              <a href="#" className="text-sm text-slate-600 dark:text-slate-300 font-medium hover:underline transition-colors">
                 Forgot password?
               </a>
             </div>
@@ -89,9 +89,9 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-8 text-center text-sm text-slate-600 dark:text-slate-300">
             Don't have an account?{' '}
-            <Link href="/signup" className="text-brand-600 dark:text-brand-400 font-medium hover:underline transition-colors">
+            <Link href="/signup" className="text-slate-600 dark:text-slate-300 font-medium hover:underline transition-colors">
               Create one
             </Link>
           </p>

@@ -131,7 +131,7 @@ export default function HomePage() {
               <div className="relative z-10 glass p-5 sm:p-8 rounded-3xl shadow-2xl border border-white/30 dark:border-navy-700/30">
                 <div className="flex justify-between items-start mb-8">
                   <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-brand-600 dark:text-brand-400 text-lg font-bold">
+                    <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-slate-600 dark:text-slate-300 text-lg font-bold">
                       D
                     </div>
                     <div>
@@ -162,10 +162,10 @@ export default function HomePage() {
                     >
                       <div className="text-xl sm:text-2xl font-bold">
                         {(stat.color === 'brand'
-                          ? 'text-brand-600 dark:text-brand-400'
+                          ? 'text-slate-600 dark:text-slate-300'
                           : stat.color === 'blue'
-                          ? 'text-blue-600 dark:text-blue-400'
-                          : 'text-purple-600 dark:text-purple-400')}
+                          ? 'text-slate-600 dark:text-slate-300'
+                          : 'text-slate-600 dark:text-slate-300')}
                         {stat.value}
                       </div>
                       <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-tighter">
@@ -183,11 +183,11 @@ export default function HomePage() {
                       transition={{ delay: 0.3 + i * 0.1 }}
                       className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-navy-700 bg-slate-50/50 dark:bg-navy-800/30"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center text-brand-600 dark:text-brand-400 text-xs font-bold">
+                      <div className="w-8 h-8 rounded-lg bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs font-bold">
                         {model.charAt(0).toUpperCase()}
                       </div>
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{model}</span>
-                      <span className="ml-auto text-xs font-medium text-brand-600 dark:text-brand-400">
+                      <span className="ml-auto text-xs font-medium text-slate-600 dark:text-slate-300">
                         $0.0002/1k
                       </span>
                     </motion.div>
@@ -237,7 +237,7 @@ export default function HomePage() {
                   <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-white mb-2 shadow-lg shadow-lg/25" style={{ background: `linear-gradient(135deg, ${feature.gradient})` }}>
                     <feature.icon className="w-5 h-5" />
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
                     {feature.title}
                   </h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">

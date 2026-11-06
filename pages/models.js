@@ -92,7 +92,7 @@ export default function ModelsPage() {
         <div className="container-page">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
             <div className="flex items-center gap-2">
-              <Globe className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+              <Globe className="h-5 w-5 text-slate-600 dark:text-slate-300" />
               <h1 className="text-h1 text-slate-900 dark:text-white mb-1">Model marketplace</h1>
             </div>
             <p className="text-sm text-slate-600 dark:text-slate-300">
@@ -235,7 +235,7 @@ export default function ModelsPage() {
                           </td>
                           <td className="px-6 py-4">
                             {disc !== null ? (
-                              <span className={`text-xs font-bold ${disc > 90 ? 'text-emerald-600 dark:text-emerald-400' : 'text-brand-600 dark:text-brand-400'}`}>
+                              <span className={`text-xs font-bold ${disc > 90 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300'}`}>
                                 −{disc.toFixed(0)}%
                               </span>
                             ) : (

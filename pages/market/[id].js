@@ -48,7 +48,7 @@ export default function MarketDetailPage() {
     return (
       <div className="min-h-screen bg-canvas dark:bg-navy-950">
         <Navbar />
-        <section className="py-10"><div className="container-page"><h1 className="text-h1 text-slate-900 dark:text-white">Model not found</h1><p className="text-slate-500 dark:text-slate-400">The requested model could not be found.</p></div></section>
+        <section className="py-10"><div className="container-page"><h1 className="text-h1 text-slate-900 dark:text-white">Model not found</h1><p className="text-slate-600 dark:text-slate-300">The requested model could not be found.</p></div></section>
         <Footer />
       </div>
     );
@@ -75,19 +75,19 @@ export default function MarketDetailPage() {
             <div className="lg:w-1/3">
               <Card className="p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center text-slate-500 dark:text-slate-400 text-lg font-bold">
+                  <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-navy-800 flex items-center justify-center text-slate-600 dark:text-slate-300 text-lg font-bold">
                     {model.provider.name.charAt(0)}
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-tighter">{model.provider.name}</p>
+                    <p className="text-xs font-medium text-slate-600 dark:text-slate-300 uppercase tracking-tighter">{model.provider.name}</p>
                     <h1 className="text-xl font-bold text-slate-900 dark:text-white">{model.name}</h1>
                   </div>
                 </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{model.description ?? 'No description available.'}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">{model.description ?? 'No description available.'}</p>
 
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="p-3 rounded-xl bg-slate-50/50 dark:bg-navy-800/30">
-                    <p className="text-xs text-slate-500 dark:text-slate-400 uppercase">Context window</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 uppercase">Context window</p>
                     <p className="text-sm font-medium text-slate-900 dark:text-white">{formatTokens(model.contextWindow ?? 0)}</p>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50/50 dark:bg-navy-800/30">

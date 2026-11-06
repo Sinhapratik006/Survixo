@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { api, formatUsd, formatTokens, formatPct } from '../lib/api.js';
 const DollarSignIcon = () => (
-  <svg className="w-5 h-5 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <svg className="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
@@ -84,7 +84,7 @@ export default function DashboardPage() {
         <div className="container-page">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-brand-600 dark:text-brand-400">
+              <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center text-slate-600 dark:text-slate-300">
                 <Activity className="w-5 h-5" />
               </div>
               <div>
@@ -135,7 +135,7 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Last 30d spend</p>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">vs baseline</p>
                 </div>
-                <div className="w-9 h-9 rounded-xl bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center text-brand-600 dark:text-brand-400">
+                <div className="w-9 h-9 rounded-xl bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center text-slate-600 dark:text-slate-300">
                   <CreditCardIcon className="w-4 h-4" />
                 </div>
               </div>
@@ -157,7 +157,7 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Requests (30d)</p>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">Across all endpoints</p>
                 </div>
-                <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center text-slate-600 dark:text-slate-300">
                   <TrendingUp className="w-4 h-4" />
                 </div>
               </div>
@@ -176,7 +176,7 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Tokens</p>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">Input + output</p>
                 </div>
-                <div className="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                <div className="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center text-slate-600 dark:text-slate-300">
                   <Users className="w-4 h-4" />
                 </div>
               </div>
@@ -197,7 +197,7 @@ export default function DashboardPage() {
               <Card className="p-0">
                 <div className="p-6 border-b border-slate-100 dark:border-navy-800/30">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                    <BarChart3Icon className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+                    <BarChart3Icon className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />
                     Spend over time
                   </h3>
                 </div>
@@ -223,7 +223,7 @@ export default function DashboardPage() {
                 <div className="p-6 border-b border-slate-100 dark:border-navy-800/30">
                   <div className="flex justify-between items-center">
                     <h3 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                      <Clock className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+                      <Clock className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />
                       Recent requests
                     </h3>
                     <Button variant="ghost" size="sm" asChild>
@@ -237,7 +237,7 @@ export default function DashboardPage() {
                       <div key={r.id} className="p-4 hover:bg-slate-50/50 dark:hover:bg-navy-800/30 transition-colors">
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex items-center gap-2">
-                            <div className="h-6 w-6 rounded-lg bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center text-brand-600 dark:text-brand-400 text-xs">
+                            <div className="h-6 w-6 rounded-lg bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center text-slate-600 dark:text-slate-300 text-xs">
                               {r.requestedModel.charAt(0).toUpperCase()}
                             </div>
                             <div className="min-w-0">

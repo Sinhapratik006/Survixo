@@ -121,7 +121,7 @@ export default function BuyerMarketplacePage() {
           <div className="bg-white dark:bg-navy-800/50 rounded-xl p-6 mb-8 shadow-sm">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                   Search listings
                 </label>
                 <input
@@ -133,7 +133,7 @@ export default function BuyerMarketplacePage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                   Min Price (USD)
                 </label>
                 <input
@@ -145,7 +145,7 @@ export default function BuyerMarketplacePage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                   Max Price (USD)
                 </label>
                 <input
@@ -157,7 +157,7 @@ export default function BuyerMarketplacePage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                   Sort by
                 </label>
                 <select
@@ -177,7 +177,7 @@ export default function BuyerMarketplacePage() {
               <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
                 API Key Listings
               </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-slate-600 dark:text-slate-300">
                 Browse available API key listings from certified sellers
               </p>
             </div>
@@ -187,16 +187,16 @@ export default function BuyerMarketplacePage() {
             {loading ? (
               <div className="col-span-full">
                 <div className="flex justify-center items-center py-12">
-                  <span className="text-slate-500 dark:text-slate-400">Loading keys…</span>
+                  <span className="text-slate-600 dark:text-slate-300">Loading keys…</span>
                 </div>
               </div>
             ) : keys.length === 0 ? (
               <div className="col-span-full text-center py-12">
                 <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-navy-800/30 flex items-center justify-center mx-auto mb-3">
-                  <span className="text-3xl text-slate-500 dark:text-slate-400">••••</span>
+                  <span className="text-3xl text-slate-600 dark:text-slate-300">••••</span>
                 </div>
                 <h3 className="text-sm font-medium text-slate-900 dark:text-white">No listings yet</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-slate-600 dark:text-slate-300">
                   No API key listings are currently available. Check back later or become a seller to create your own listing.
                 </p>
               </div>
@@ -207,12 +207,12 @@ export default function BuyerMarketplacePage() {
               >
                 <div className="p-5 flex flex-col">
                   <h3 className="text-base font-medium text-slate-900 dark:text-white truncate">{key.title}</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-3">{key.description || 'No description'}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 line-clamp-3">{key.description || 'No description'}</p>
                   <div className="mt-3 flex items-baseline gap-2 flex-wrap">
                     <span className="text-sm font-semibold text-slate-900 dark:text-white">
                       {formatUsd(key.priceUsd)}
                     </span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                    <span className="text-xs text-slate-600 dark:text-slate-300">
                       for {formatUsd(key.creditValueUsd)} of API credits
                     </span>
                     <Badge variant={key.status === 'ACTIVE' ? 'default' : 'secondary'} size="sm">
@@ -248,16 +248,16 @@ export default function BuyerMarketplacePage() {
               <ShoppingBag className="w-4 h-4 text-brand-600 dark:text-brand-400" />
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">My Purchases</h2>
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
+            <p className="text-sm text-slate-600 dark:text-slate-300 mb-5">
               Keys stay hidden until your payment succeeds. Reveal, then copy when you need it.
             </p>
 
             {ordersLoading ? (
-              <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">Loading your purchases…</div>
+              <div className="py-8 text-center text-sm text-slate-600 dark:text-slate-300">Loading your purchases…</div>
             ) : orders.length === 0 ? (
               <div className="py-8 text-center">
                 <KeyRound className="w-8 h-8 mx-auto text-slate-300 dark:text-navy-600 mb-2" />
-                <p className="text-sm text-slate-500 dark:text-slate-400">No purchases yet.</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300">No purchases yet.</p>
               </div>
             ) : (
               <ul className="divide-y divide-slate-200 dark:divide-navy-700">
@@ -269,7 +269,7 @@ export default function BuyerMarketplacePage() {
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{o.listingTitle}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
                             {formatUsd(o.amountUsd)} · {o.listingPrefix || '••••'} ·{' '}
                             <span className={isPaid ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}>
                               {o.status}
@@ -291,7 +291,7 @@ export default function BuyerMarketplacePage() {
                               )}
                             </Button>
                           ) : (
-                            <span className="text-xs text-slate-400 dark:text-slate-500">Available after payment</span>
+                            <span className="text-xs text-slate-400 dark:text-slate-600">Available after payment</span>
                           )}
                         </div>
                       </div>
@@ -317,7 +317,7 @@ export default function BuyerMarketplacePage() {
           </div>
 
           {/* Pagination section would go here */}
-          <div className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
+          <div className="mt-8 text-center text-sm text-slate-600 dark:text-slate-300">
             {/* Pagination controls */}
           </div>
         </div>

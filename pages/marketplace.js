@@ -156,7 +156,7 @@ export default function MarketplacePage() {
                   <div className="flex items-center justify-between">
                     <a
                       href="/marketplace/{key.id}"
-                      className="text-sm text-brand-600 dark:text-brand-400 hover:underline transition-colors"
+                      className="text-sm text-slate-600 dark:text-slate-300 hover:underline transition-colors"
                     >
                       View Details
                     </a>
