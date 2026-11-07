@@ -95,6 +95,8 @@ export interface KeyHealthResult {
   provider: string | null;
   baseUrl: string | null;
   modelCount: number;
+  /** Full list of models the verified key serves (used to pre-fill listing forms). */
+  models: string[];
   sampleModels: string[];
   detail: string;
 }
@@ -303,7 +305,7 @@ export async function checkListingKey({
 }): Promise<KeyHealthResult> {
   const format = inspectKeyFormat(apiKey);
   if (!format.ok) {
-    return { ok: false, provider: null, baseUrl: null, modelCount: 0, sampleModels: [], detail: format.reason! };
+    return { ok: false, provider: null, baseUrl: null, modelCount: 0, models: [], sampleModels: [], detail: format.reason! };
   }
 
   const key = apiKey.trim();
@@ -319,7 +321,7 @@ export async function checkListingKey({
     const detail = baseUrl
       ? firstTargetFailure(outcomes[0]!, baseUrl)
       : `We could not verify this key against any supported provider. ${summarizeFailures(outcomes)}. Set the API base URL your key belongs to, or check the key and try again.`;
-    return { ok: false, provider: null, baseUrl: null, modelCount: 0, sampleModels: [], detail };
+    return { ok: false, provider: null, baseUrl: null, modelCount: 0, models: [], sampleModels: [], detail };
   }
 
   const sample = passed.models.slice(0, SAMPLE_MODELS);
@@ -327,6 +329,7 @@ export async function checkListingKey({
     provider: passed.name,
     baseUrl: passed.baseUrl,
     modelCount: passed.models.length,
+    models: passed.models,
     sampleModels: sample,
   };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Menu, X, Sun, Moon, Eye, EyeOff, ShieldCheck, Info, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import Button from '../../components/Button';
@@ -24,6 +24,11 @@ export default function SellerCreatePage() {
   const [baseUrl, setBaseUrl] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [keyCheck, setKeyCheck] = useState({ state: 'idle' });
+  const [autoFilled, setAutoFilled] = useState({ name: false, models: false });
+  // Once a seller manually touches a field we stop auto-filling it, so an
+  // auto-filled value is never clobbered on the next key verification.
+  const nameUserTouched = useRef(false);
+  const modelsUserTouched = useRef(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [dark, setDark] = useState(false);
@@ -94,13 +99,31 @@ export default function SellerCreatePage() {
     }
     let cancelled = false;
     setKeyCheck({ state: 'checking' });
+    setAutoFilled({ name: false, models: false });
     const timer = setTimeout(async () => {
       try {
         const res = await api.post('/api/marketplace/verify-key', {
           apiKey: key,
           baseUrl: baseUrl.trim() || undefined,
         });
-        if (!cancelled) setKeyCheck({ state: res.data.ok ? 'ok' : 'fail', ...res.data });
+        if (!cancelled) {
+          setKeyCheck({ state: res.data.ok ? 'ok' : 'fail', ...res.data });
+          // Auto-fill the listing name and models from the detected provider so
+          // sellers don't have to type them by hand. Only fill empty fields and
+          // never overwrite something the seller has already typed.
+          if (res.data.ok) {
+            const provider = res.data.provider;
+            const detectedModels = res.data.models || [];
+            if (!nameUserTouched.current && !name.trim() && provider) {
+              setName(`${provider} API Key`);
+              setAutoFilled((prev) => ({ ...prev, name: true }));
+            }
+            if (!modelsUserTouched.current && !models.trim() && detectedModels.length) {
+              setModels(detectedModels.join(', '));
+              setAutoFilled((prev) => ({ ...prev, models: true }));
+            }
+          }
+        }
       } catch (err) {
         if (!cancelled) setKeyCheck({ state: 'fail', detail: err.message || 'Could not reach the verification service.' });
       }
@@ -209,7 +232,7 @@ export default function SellerCreatePage() {
                 <Input
                   placeholder="e.g. GPT-4 Access Key"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => { nameUserTouched.current = true; setName(e.target.value); }}
                   required
                   maxLength={120}
                 />
@@ -273,7 +296,7 @@ export default function SellerCreatePage() {
                 <Input
                   placeholder="e.g. gpt-4, gpt-4-turbo, claude-3-opus"
                   value={models}
-                  onChange={(e) => setModels(e.target.value)}
+                  onChange={(e) => { modelsUserTouched.current = true; setModels(e.target.value); }}
                 />
                 <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-600">Comma-separated model names</p>
               </div>
@@ -316,13 +339,28 @@ export default function SellerCreatePage() {
                   </p>
                 )}
                 {keyCheck.state === 'ok' && (
-                  <p className="mt-2 flex items-start gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
-                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-px" />
-                    <span>
-                      Key verified — {keyCheck.provider}
-                      {keyCheck.modelCount ? `, ${keyCheck.modelCount} model(s) available` : ''}.
-                    </span>
-                  </p>
+                  <>
+                    <p className="mt-2 flex items-start gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-px" />
+                      <span>
+                        Key verified — {keyCheck.provider}
+                        {keyCheck.modelCount ? `, ${keyCheck.modelCount} model(s) available` : ''}.
+                      </span>
+                    </p>
+                    {(autoFilled.name || autoFilled.models) && (
+                      <p className="mt-1 flex items-start gap-1.5 text-xs text-blue-600 dark:text-blue-400">
+                        <Info className="w-3.5 h-3.5 shrink-0 mt-px" />
+                        <span>
+                          Listing{' '}
+                          {autoFilled.name && autoFilled.models
+                            ? 'name and models'
+                            : autoFilled.name
+                              ? 'name'
+                              : 'models'} pre-filled from the detected provider — edit them if needed.
+                        </span>
+                      </p>
+                    )}
+                  </>
                 )}
                 {keyCheck.state === 'fail' && (
                   <p className="mt-2 flex items-start gap-1.5 text-xs text-rose-600 dark:text-rose-400">

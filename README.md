@@ -1,6 +1,6 @@
-# Nexovra: AI inference marketplace
+# Survixo: AI inference marketplace
 
-> **Nexovra** is a temporary working name, not a trademark claim. This is an original product inspired by the two-sided inference-marketplace concept. It is not affiliated with any referenced company.
+> **Survixo** is a temporary working name, not a trademark claim. This is an original product inspired by the two-sided inference-marketplace concept. It is not affiliated with any referenced company.
 
 **One API. Smarter routing. Better prices. Complete control.**
 
