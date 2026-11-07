@@ -26,11 +26,36 @@ export default function BuyerMarketplacePage() {
   const [busyOrder, setBusyOrder] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
   const [buyBusy, setBuyBusy] = useState(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // Require a session — signed-out visitors go to /login and come back here,
+  // instead of seeing an empty marketplace.
+  useEffect(() => {
+    if (!router.isReady) return;
+    let cancelled = false;
+    (async () => {
+      const goToLogin = () => router.replace('/login?next=/buyer/marketplace');
+      try {
+        const res = await api.get('/api/auth/me');
+        if (cancelled) return;
+        // /api/auth/me answers 200 with { user: null } when signed out,
+        // so check the payload rather than relying on a thrown error.
+        if (res.data && res.data.user) setCheckingAuth(false);
+        else goToLogin();
+      } catch (err) {
+        if (cancelled) return;
+        if (err.status === 401 || err.status === 403) goToLogin();
+        else setCheckingAuth(false); // transient failure: let them through
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [router.isReady]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       if (!router.isReady) return;
+      if (checkingAuth) return;
       setLoading(true);
       try {
         const res = await api.get('/api/marketplace/listings?search=' + search + '&minPrice=' + minPrice + '&maxPrice=' + maxPrice + '&sort=' + sortBy + (cursor ? '&cursor=' + cursor : ''));
@@ -44,12 +69,13 @@ export default function BuyerMarketplacePage() {
         if (!cancelled) setLoading(false);
       }
     })();
-  }, [router.isReady, search, minPrice, maxPrice, sortBy, cursor]);
+  }, [router.isReady, checkingAuth, search, minPrice, maxPrice, sortBy, cursor]);
 
   // Load the buyer's own purchases (keys are only revealed from here, after payment).
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (checkingAuth) return;
       setOrdersLoading(true);
       try {
         const res = await api.get('/api/marketplace/orders');
@@ -62,7 +88,7 @@ export default function BuyerMarketplacePage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [router.isReady]);
+  }, [checkingAuth]);
 
   const handleBuy = async (listingId) => {
     setBuyBusy(listingId);
@@ -111,6 +137,17 @@ export default function BuyerMarketplacePage() {
       /* clipboard unavailable */
     }
   };
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-canvas dark:bg-navy-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-slate-600 dark:text-slate-300">Checking your session…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-canvas dark:bg-navy-950">
