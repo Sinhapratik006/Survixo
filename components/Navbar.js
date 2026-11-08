@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Button from './Button';
-import { Menu, X, Sun, Moon, Globe, DollarSign, BarChart3, Key, ShieldCheck, LogOut } from 'lucide-react';
+import { Menu, X, Sun, Moon, Globe, DollarSign, BarChart3, Key, ShieldCheck, LogOut, User } from 'lucide-react';
 import { api } from '../lib/api.js';
 
 const navLinks = [
@@ -75,6 +75,14 @@ export default function Navbar() {
                 </Link>
               );
             })}
+            {authed === true && (
+              <Link
+                href="/profile"
+                className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1.5"
+              >
+                <User className="w-4 h-4" /> Profile
+              </Link>
+            )}
             <div className="flex items-center gap-3">
               {authed === true && (
                 <Button variant="outline" size="sm" onClick={handleLogout}>
@@ -144,6 +152,15 @@ export default function Navbar() {
               </button>
             </div>
             <div className="pt-4 space-y-3">
+              {authed === true && (
+                <Link
+                  href="/profile"
+                  onClick={() => setIsOpen(false)}
+                  className="block text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 py-3 px-4 rounded-xl transition-colors flex items-center gap-1.5"
+                >
+                  <User className="w-4 h-4" /> Profile
+                </Link>
+              )}
               {authed === true && (
                 <Button variant="outline" className="w-full" onClick={handleLogout}>
                   <LogOut className="w-3.5 h-3.5 mr-2" /> Sign out
