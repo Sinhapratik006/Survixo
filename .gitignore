@@ -17,3 +17,6 @@ blob-report/
 # Next.js build output (tracked by mistake earlier)
 .next/
 out/
+
+# TypeScript incremental build info (per-machine cache)
+*.tsbuildinfo
