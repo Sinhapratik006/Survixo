@@ -9,8 +9,7 @@
     "skipLibCheck": true,
     "types": ["node"],
     "outDir": "dist",
-    "rootDir": "src",
-  "allowImportingTsExtensions": true
+    "rootDir": "src"
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"]
 }
