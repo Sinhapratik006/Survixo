@@ -18,7 +18,7 @@ adminRouter.post('/benchmarks/run', async (req, res) => {
   if (!member) throw new Error('You must be a member of the billing organization');
   const results = [];
   for (const modelId of modelIds) {
-    const r = await runArithmeticBenchmark({ orgId, userId: req.auth.user.id, modelId, isPublic: true });
+    const r = await runArithmeticBenchmark({ orgId, userId: req.auth!.user.id, modelId, isPublic: true });
     results.push({ ok: r.ok, modelId: r.modelId, score: r.ok ? r.result.score : undefined, error: r.ok ? undefined : r.error });
   }
   res.json({ results: results.map((r) => (r.ok ? { ok: true, modelId: r.modelId, score: r.score } : { ok: false, modelId: r.modelId, error: r.error }) ) });
