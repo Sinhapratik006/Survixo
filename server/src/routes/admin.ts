@@ -66,7 +66,7 @@ adminRouter.post('/marketplace/payout-accounts/:id/verify', requireAdmin, async 
   }
   await audit({
     orgId: account.orgId,
-    actorUserId: req.auth.user.id,
+    actorUserId: req.auth!.user.id,
     action: body.isVerified ? 'marketplace.payout_account.verified' : 'marketplace.payout_account.unverified',
     targetType: 'payout_account',
     targetId: account.id,
