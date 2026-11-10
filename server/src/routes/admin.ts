@@ -14,7 +14,7 @@ import { z } from 'zod';
 export const adminRouter = Router();
 adminRouter.post('/benchmarks/run', async (req, res) => {
   const { modelIds, orgId } = parse(z.object({ modelIds: z.array(z.string()).min(1).max(10), orgId: z.string() }), req.body);
-  const member = await prisma.membership.findUnique({ where: { orgId: orgId, userId: req.auth.user.id } });
+  const member = await prisma.membership.findUnique({ where: { orgId_userId: { orgId, userId: req.auth.user.id } } });
   if (!member) throw new Error('You must be a member of the billing organization');
   const results = [];
   for (const modelId of modelIds) {
@@ -57,7 +57,7 @@ adminRouter.post('/marketplace/payout-accounts/:id/verify', requireAdmin, async 
   let account;
   try {
     account = await prisma.cryptoPayoutAccount.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { isVerified: body.isVerified },
     });
   } catch (err) {
