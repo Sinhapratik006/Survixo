@@ -16,7 +16,7 @@ adminRouter.post('/benchmarks/run', async (req, res) => {
   const { modelIds, orgId } = parse(z.object({ modelIds: z.array(z.string()).min(1).max(10), orgId: z.string() }), req.body);
   const member = await prisma.membership.findUnique({ where: { orgId_userId: { orgId, userId: req.auth!.user.id } } });
   if (!member) throw new Error('You must be a member of the billing organization');
-  const results = [];
+  const results: { ok: boolean; modelId: string; score?: number; error?: string }[] = [];
   for (const modelId of modelIds) {
     const r = await runArithmeticBenchmark({ orgId, userId: req.auth!.user.id, modelId, isPublic: true });
     results.push({ ok: r.ok, modelId: r.modelId, score: r.ok ? r.result.score : undefined, error: r.ok ? undefined : r.error });
