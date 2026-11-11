@@ -2,5 +2,9 @@
   "buildCommand": "npm run build:web",
   "outputDirectory": ".next",
   "framework": "nextjs",
-  "regions": ["iad1"]
+  "regions": ["iad1"],
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://survixo-1.onrender.com/api/:path*" },
+    { "source": "/v1/:path*", "destination": "https://survixo-1.onrender.com/v1/:path*" }
+  ]
 }
