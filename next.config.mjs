@@ -7,11 +7,11 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:8787/api/:path*',
+        destination: 'https://survixo-1.onrender.com/api/:path*',
       },
       {
         source: '/v1/:path*',
-        destination: 'http://localhost:8787/v1/:path*',
+        destination: 'https://survixo-1.onrender.com/v1/:path*',
       },
     ];
   },
