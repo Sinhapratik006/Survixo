@@ -1,9 +1,12 @@
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Button from '../components/Button';
 import Card from '../components/Card';
+import ModelSlider from '../components/ModelSlider';
 import { motion } from 'framer-motion';
+import { api } from '../lib/api.js';
 import {
   Zap,
   Brain,
@@ -72,6 +75,40 @@ const statItems = [
 ];
 
 export default function HomePage() {
+  const [models, setModels] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        setLoading(true);
+        const first = await api.get('/api/models', { query: {} });
+        const data = first.data.data || [];
+        const total = first.data.total || 0;
+
+        // Fetch every model when the default page doesn't return them all.
+        let all = data;
+        if (total > data.length && !cancelled) {
+          const second = await api.get('/api/models', { query: { limit: total } });
+          all = second.data.data || data;
+        }
+
+        if (!cancelled) {
+          setModels(all);
+          setLoading(false);
+        }
+      } catch (e) {
+        console.error(e);
+        setLoading(false);
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-canvas dark:bg-navy-950 text-slate-900 dark:text-slate-100 selection:bg-brand-500/30 selection:text-white">
       <Navbar />
@@ -149,12 +186,17 @@ export default function HomePage() {
                 {/* Panel header */}
                 <div className="flex justify-between items-start mb-8">
                   <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-brand-500/30 relative overflow-hidden">
-                      N
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center shadow-lg shadow-brand-500/30 relative overflow-hidden">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-full h-full" fill="none" stroke="#FFFFFF" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M6 20 L12 4 L18 20"/>
+                        <path d="M9 14 L15 14"/>
+                        <path d="M20 4 L20 20"/>
+                        <path d="M18 6 L22 6"/>
+                      </svg>
                       <div className="absolute inset-0 bg-white/10" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-slate-900 dark:text-slate-100 tracking-tight">Nexovra Console</p>
+                      <p className="text-xs font-bold text-slate-900 dark:text-slate-100 tracking-tight">ApiTradeX Console</p>
                       <p className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">Live metrics</p>
                     </div>
                   </div>
@@ -223,11 +265,11 @@ export default function HomePage() {
                   <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
                 </div>
                 <span className="ml-3 text-[10px] font-medium text-slate-500 dark:text-slate-400 tracking-wider uppercase">bash session</span>
-                <span className="ml-auto text-[10px] font-medium text-slate-500 dark:text-slate-400">nexovra.sh</span>
+                <span className="ml-auto text-[10px] font-medium text-slate-500 dark:text-slate-400">apitradex.sh</span>
               </div>
               <div className="p-5 md:p-7 font-mono text-sm md:text-base leading-relaxed overflow-x-auto">
                 <span className="text-slate-500 dark:text-slate-400">$</span>{' '}
-                <span className="text-brand-600 dark:text-brand-400 font-semibold">curl https://api.nexovra.local/v1/chat/completions</span><br />
+                <span className="text-brand-600 dark:text-brand-400 font-semibold">curl https://api.apitradex.local/v1/chat/completions</span><br />
                 <span className="text-slate-400 dark:text-slate-500">  -H "Authorization: Bearer nxv_..."</span><br />
                 <span className="text-slate-400 dark:text-slate-500">  -H "Content-Type: application/json"</span><br />
                 <span className="text-slate-400 dark:text-slate-500">  -d &#123;</span><br />
@@ -253,7 +295,7 @@ export default function HomePage() {
               Built for teams shipping AI
             </h2>
             <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto font-light">
-              From smart routing to spend controls, Nexovra handles the complexity so you can focus on building.
+              From smart routing to spend controls, ApiTradeX handles the complexity so you can focus on building.
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-6 md:gap-8">
@@ -283,6 +325,19 @@ export default function HomePage() {
               </Card>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── Model showcase ── */}
+      <section className="py-24 md:py-32 relative">
+        <div className="container-page">
+          <ModelSlider
+            models={models}
+            title="Every AI model"
+            subtitle="Open offers from independent sellers"
+            autoplay={true}
+            interval={5000}
+          />
         </div>
       </section>
 
