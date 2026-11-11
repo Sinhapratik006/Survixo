@@ -16,7 +16,7 @@ export async function createCheckoutSession(input: { orgId: string; amountCents:
     'line_items[0][quantity]': '1',
     'line_items[0][price_data][currency]': 'usd',
     'line_items[0][price_data][unit_amount]': String(input.amountCents),
-    'line_items[0][price_data][product_data][name]': 'Nexovra prepaid inference credit',
+    'line_items[0][price_data][product_data][name]': 'ApiTradeX prepaid inference credit',
     client_reference_id: input.orgId,
     customer_email: input.email,
     'metadata[orgId]': input.orgId,

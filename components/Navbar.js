@@ -20,7 +20,7 @@ export default function Navbar() {
   const [authed, setAuthed] = useState(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem('nexovra-theme');
+    const stored = localStorage.getItem('apitradex-theme');
     if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       document.documentElement.classList.add('dark');
       setDark(true);
@@ -38,7 +38,7 @@ export default function Navbar() {
   const toggleTheme = () => {
     const next = !dark;
     document.documentElement.classList.toggle('dark', next);
-    localStorage.setItem('nexovra-theme', next ? 'dark' : 'light');
+    localStorage.setItem('apitradex-theme', next ? 'dark' : 'light');
     setDark(next);
   };
 
@@ -56,10 +56,15 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-brand-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-brand-500/30 relative overflow-hidden">
-              <span className="text-white font-bold text-sm">N</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-full h-full" fill="none" stroke="#FFFFFF" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 20 L12 4 L18 20"/>
+                <path d="M9 14 L15 14"/>
+                <path d="M20 4 L20 20"/>
+                <path d="M18 6 L22 6"/>
+              </svg>
               <div className="absolute inset-0 bg-white/10" />
             </div>
-            <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">Survixo</span>
+            <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">ApiTradeX</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8">

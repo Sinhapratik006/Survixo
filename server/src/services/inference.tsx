@@ -118,7 +118,7 @@ export interface StreamSink {
   onClose(cb: () => void): void;
 }
 
-export interface NexovraMeta {
+export interface ApiTradeXMeta {
   request_id: string;
   model: string;
   offer_id: string;
@@ -137,7 +137,7 @@ export interface NexovraMeta {
 export interface CompletionResult {
   requestId: string;
   body: Record<string, unknown>;
-  meta: NexovraMeta;
+  meta: ApiTradeXMeta;
   content: string | null;
   usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
 }
@@ -175,7 +175,7 @@ async function resolveModels(requested: string) {
     where: { OR: [{ id: { equals: requested, mode: 'insensitive' } }, { aliases: { has: requested.toLowerCase() } }] },
     select: { id: true, apiSupported: true, maxOutputTokens: true, name: true },
   });
-  if (!model) throw new InferenceError(404, 'model_not_found', `Model "${requested}" is not in the Nexovra catalog. List models with GET /v1/models.`);
+  if (!model) throw new InferenceError(404, 'model_not_found', `Model "${requested}" is not in the ApiTradeX catalog. List models with GET /v1/models.`);
   if (!model.apiSupported)
     throw new InferenceError(400, 'unsupported_model', `"${model.id}" is listed in the catalog but is not yet available through the chat completions API.`);
   return { auto: false, models: [model] };
@@ -543,7 +543,7 @@ export async function runChatCompletion(ctx: InferenceContext, rawBody: unknown,
       });
       void evaluateBudgetAlerts(ctx.orgId, projectId).catch((err) => logger.error({ err }, 'budget alert evaluation failed'));
 
-      const meta: NexovraMeta = {
+      const meta: ApiTradeXMeta = {
         request_id: id,
         model: c.modelId,
         offer_id: c.offerId,

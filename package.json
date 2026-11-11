@@ -1,9 +1,9 @@
 {
-  "name": "nexovra",
+  "name": "apitradex",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Nexovra (working name) - a two-sided AI inference marketplace with a unified OpenAI-compatible API.",
+  "description": "ApiTradeX - a two-sided AI inference marketplace with a unified OpenAI-compatible API.",
   "engines": {
     "node": ">=20.11"
   },

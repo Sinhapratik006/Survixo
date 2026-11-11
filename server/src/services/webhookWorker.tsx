@@ -48,7 +48,7 @@ export async function deliver(deliveryId: string): Promise<boolean> {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'user-agent': 'Nexovra-Webhooks/1.0',
+        'user-agent': 'ApiTradeX-Webhooks/1.0',
         'nexovra-event': d.event,
         'nexovra-delivery-id': d.id,
         'nexovra-signature': signWebhook(secret, body),

@@ -9,7 +9,7 @@ const app = createApp();
 const server = app.listen(env.PORT, () => {
   logger.info(
     { port: env.PORT, demoMode: env.DEMO_MODE, billingMode: env.BILLING_MODE, googleAuth: env.googleEnabled, store: store.kind },
-    `Nexovra API listening on http://localhost:${env.PORT}`,
+    `ApiTradeX API listening on http://localhost:${env.PORT}`,
   );
 });
 

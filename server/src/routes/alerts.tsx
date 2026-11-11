@@ -121,7 +121,7 @@ webhooksRouter.post('/:id/test', requirePermission('webhooks:manage'), async (re
   const hook = await prisma.webhookEndpoint.findFirst({ where: { id: String(req.params.id), orgId: req.org!.id } });
   if (!hook) throw notFound('Webhook not found');
   const delivery = await prisma.webhookDelivery.create({
-    data: { endpointId: hook.id, event: 'test.ping', payload: { type: 'test.ping', created_at: new Date().toISOString(), org_id: req.org!.id, title: 'Test event', body: 'This is a test delivery from Nexovra.', data: {} } },
+    data: { endpointId: hook.id, event: 'test.ping', payload: { type: 'test.ping', created_at: new Date().toISOString(), org_id: req.org!.id, title: 'Test event', body: 'This is a test delivery from ApiTradeX.', data: {} } },
   });
   res.status(202).json({ deliveryId: delivery.id });
 });

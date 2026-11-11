@@ -32,7 +32,7 @@ export default function LegalPage() {
                   <div>
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white">API Access</h3>
                     <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                      Nexovra provides a unified OpenAI-compatible API for AI inference. API keys are issued per
+                      ApiTradeX provides a unified OpenAI-compatible API for AI inference. API keys are issued per
                       account and must be kept confidential. Do not share keys in client-side code or public
                       repositories.
                     </p>
@@ -94,7 +94,7 @@ export default function LegalPage() {
                   <div>
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white">Limitation of Liability</h3>
                     <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                      Nexovra is not liable for indirect or consequential damages arising from use of the service.
+                      ApiTradeX is not liable for indirect or consequential damages arising from use of the service.
                       Service is provided "as is" without warranties of any kind.
                     </p>
                   </div>
@@ -110,7 +110,7 @@ export default function LegalPage() {
                 <div>
                   <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Questions?</h4>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Contact our legal team at legal@nexovra.local for questions about these terms.
+                    Contact our legal team at legal@apitradex.local for questions about these terms.
                   </p>
                 </div>
               </div>

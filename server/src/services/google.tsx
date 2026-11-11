@@ -138,7 +138,7 @@ export function beginGoogleFlow(redirect: unknown, mode: 'login' | 'link') {
 }
 
 /**
- * Map a verified Google identity to a Nexovra user.
+ * Map a verified Google identity to a ApiTradeX user.
  * - Existing Google link → that user.
  * - `link` mode with an active session → attach Google to the current user.
  * - Matching email → link to that user. If that account's email was never
@@ -158,7 +158,7 @@ export async function resolveGoogleUser(identity: GoogleIdentity, opts: { mode: 
   if (opts.mode === 'link') {
     if (!opts.currentUserId) throw new HttpError(401, 'unauthorized', 'Sign in before linking a Google account.');
     if (linked && linked.userId !== opts.currentUserId)
-      throw new HttpError(409, 'google_already_linked', 'This Google account is linked to a different Nexovra user.');
+      throw new HttpError(409, 'google_already_linked', 'This Google account is linked to a different ApiTradeX user.');
     if (!linked) {
       await prisma.oAuthAccount.create({ data: { userId: opts.currentUserId, provider: 'google', providerAccountId: identity.sub, email } });
       await audit({ actorUserId: opts.currentUserId, action: 'auth.google.linked', ip: opts.ip });

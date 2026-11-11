@@ -4,7 +4,7 @@ export const SIGNATURE_HEADER = 'nexovra-signature';
 export const DEFAULT_TOLERANCE_SECONDS = 300;
 
 /**
- * Signature format (header `Nexovra-Signature`):
+ * Signature format (header `ApiTradeX-Signature`):
  *   t=<unix seconds>,v1=<hex HMAC-SHA256(secret, `${t}.${rawBody}`)>
  */
 export function signWebhook(secret: string, rawBody: string, timestamp = Math.floor(Date.now() / 1000)): string {

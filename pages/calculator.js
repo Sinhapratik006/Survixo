@@ -149,7 +149,7 @@ export default function CalculatorPage() {
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Monthly estimate</h3>
                     <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                      Direct vs. Survixo
+                      Direct vs. ApiTradeX
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-4 mb-6">
@@ -167,7 +167,7 @@ export default function CalculatorPage() {
                     </div>
                     <div className="p-4 rounded-xl bg-brand-50/50 dark:bg-brand-900/10 border border-brand-200/50 dark:border-brand-900/30">
                       <div className="text-xs font-medium text-brand-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-                        Survixo
+                        ApiTradeX
                       </div>
                       <div className="flex items-baseline gap-1">
                         <span className="text-2xl font-bold text-slate-600 dark:text-slate-300">${surplusBill.toFixed(2)}</span>
@@ -180,7 +180,7 @@ export default function CalculatorPage() {
                   </div>
                   <div className="flex items-baseline justify-between gap-4">
                     <div>
-                      <div className="text-xs font-medium text-slate-900 dark:text-white">Total with Survixo</div>
+                      <div className="text-xs font-medium text-slate-900 dark:text-white">Total with ApiTradeX</div>
                       <div className="text-xl font-bold text-slate-900 dark:text-white">${surplusBill.toFixed(2)}</div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Estimated monthly bill</div>
                     </div>

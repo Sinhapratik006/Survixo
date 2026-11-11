@@ -20,7 +20,7 @@ import { runChatCompletion } from '../services/inference.js';
 import { runArithmeticBenchmark } from '../services/benchmark.js';
 import { store } from '../lib/store.js';
 
-const DECLARED = 'Catalog seed from public model documentation - declared, not verified by Nexovra';
+const DECLARED = 'Catalog seed from public model documentation - declared, not verified by ApiTradeX';
 const DEMO_PRICE_NOTE = 'Illustrative demo reference price - not a provider quote';
 
 const providers = [
@@ -164,7 +164,7 @@ export async function seedSellers() {
   console.log(`[ok] Demo sellers: ${sellers.length} synthetic sellers, ${active} validated demo offers`);
 }
 
-const DEMO_EMAIL = 'demo@nexovra.local';
+const DEMO_EMAIL = 'demo@apitradex.local';
 const DEMO_PASSWORD = 'demo-password-123';
 
 export async function seedDemoBuyer() {
@@ -224,10 +224,10 @@ export async function seedTraffic(orgId: string) {
 export async function seedBenchmarks() {
   const exists = await prisma.benchmarkResult.count({ where: { isPublic: true } });
   if (exists) return;
-  let org = await prisma.organization.findUnique({ where: { slug: 'nexovra-benchmarks-demo' } });
-  org ??= await prisma.organization.create({ data: { name: 'Nexovra Benchmarks (demo)', slug: 'nexovra-benchmarks-demo', isDemo: true } });
+  let org = await prisma.organization.findUnique({ where: { slug: 'apitradex-benchmarks-demo' } });
+  org ??= await prisma.organization.create({ data: { name: 'ApiTradeX Benchmarks (demo)', slug: 'apitradex-benchmarks-demo', isDemo: true } });
   await creditBalance({ orgId: org.id, amountMicros: 10_000_000n, type: 'DEMO_CREDIT', paymentRef: 'seed-benchmarks', description: 'Demo credit for benchmark runs' });
   const ids = ['llama-3.1-8b-instruct', 'llama-3.3-70b-instruct', 'qwen-2.5-72b-instruct', 'deepseek-v3', 'mistral-7b-instruct-v0.3'];
   for (const modelId of ids) await runArithmeticBenchmark({ orgId: org.id, modelId, isPublic: true });
-  console.log(`[ok] Demo benchmarks: ran nexovra-arith-smoke against ${ids.length} models on demo endpoints (synthetic results)`);
+  console.log(`[ok] Demo benchmarks: ran apitradex-arith-smoke against ${ids.length} models on demo endpoints (synthetic results)`);
 }

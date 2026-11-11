@@ -68,7 +68,7 @@ export default function DocsPage() {
               </div>
               <h1 className="text-h1 text-slate-900 dark:text-white mb-4">Documentation</h1>
               <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-                Find guides, API references, and integration help for the Nexovra inference API.
+                Find guides, API references, and integration help for the ApiTradeX inference API.
               </p>
             </div>
             <div className="hidden md:flex items-center gap-3">

@@ -145,7 +145,7 @@ export async function createDodoCheckout({
               currency: listing.currency,
               product_data: {
                 name: listing.title,
-                description: listing.description ?? 'API key purchase from Nexovra marketplace',
+                description: listing.description ?? 'API key purchase from ApiTradeX marketplace',
                 metadata: {
                   listing_id: listing.id,
                   order_id: order.id,
@@ -412,7 +412,7 @@ export async function createDodoProductAndPrice({
     },
     body: JSON.stringify({
       name: title,
-      description: description ?? 'API key listing on Nexovra marketplace',
+      description: description ?? 'API key listing on ApiTradeX marketplace',
       metadata: { listing_id: listingId },
     }),
   });

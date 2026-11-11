@@ -117,7 +117,7 @@ export async function recommendModels(input: MatchInput) {
     reasons.push(`Cheapest healthy offer: $${b.inputPerM}/1M input, $${b.outputPerM}/1M output${b.discountPct !== null ? ` (${b.discountPct}% below the baseline reference)` : ''}`);
     for (const c of required) {
       const cap = m.capabilities.find((x) => x.capability === c);
-      reasons.push(`${c} support ${cap?.status === 'verified' ? 'verified by Nexovra' : 'declared in catalog (not independently verified)'}`);
+      reasons.push(`${c} support ${cap?.status === 'verified' ? 'verified by ApiTradeX' : 'declared in catalog (not independently verified)'}`);
     }
     if (m.contextWindow) reasons.push(`Context window ${m.contextWindow.toLocaleString()} tokens`);
     else warnings.push('Context window unknown');

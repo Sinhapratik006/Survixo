@@ -1,6 +1,6 @@
-# Survixo: AI inference marketplace
+# ApiTradeX: AI inference marketplace
 
-> **Survixo** is a temporary working name, not a trademark claim. This is an original product inspired by the two-sided inference-marketplace concept. It is not affiliated with any referenced company.
+> **ApiTradeX** is a two-sided AI inference marketplace with a unified OpenAI-compatible API. This is an original product and is not affiliated with any referenced company.
 
 **One API. Smarter routing. Better prices. Complete control.**
 
@@ -258,7 +258,7 @@ Responses include `nexovra: { request_id, seller, cost_usd, baseline_cost_usd, e
 - **Google OAuth credentials** (the code is complete; a real round trip needs your client ID and secret).
 - **Stripe**: Checkout and webhook verification are implemented over the REST API but have not been exercised against a live Stripe account. Set `BILLING_MODE=stripe` and the keys, then test in Stripe test mode.
 - **Payout provider**: payout requests reserve seller funds and are recorded, but **no money is transferred**. An admin records the outcome (`POST /api/admin/payouts/:id`, `PAID` requires an external reference).
-- **Real seller supply**: connect any OpenAI-compatible endpoint (vLLM, TGI, Ollama behind HTTPS, hosted providers) on the Seller page. Nexovra can't attest that a seller serves the exact model it advertises.
+- **Real seller supply**: connect any OpenAI-compatible endpoint (vLLM, TGI, Ollama behind HTTPS, hosted providers) on the Seller page. ApiTradeX can't attest that a seller serves the exact model it advertises.
 - **Email delivery**: email verification and member invitations by email are not implemented. Members must already have an account.
 - **Redis** in production, a **KMS** for the master key, and TLS termination and backups.
 - Embeddings, image, audio and video API routes are not implemented. Those models are listed as catalog-only.

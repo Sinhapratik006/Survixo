@@ -99,7 +99,7 @@ teamsRouter.post('/current/members', requirePermission('members:manage'), async 
   const org = await prisma.organization.findUniqueOrThrow({ where: { id: req.org!.id } });
   if (org.personal) throw badRequest('Personal workspaces cannot have members. Create a team organization instead.');
   const user = await prisma.user.findUnique({ where: { email: normalizeEmail(body.email) } });
-  if (!user || user.deletedAt) throw notFound('No Nexovra account uses this email. Ask them to sign up first, then add them.', 'user_not_found');
+  if (!user || user.deletedAt) throw notFound('No ApiTradeX account uses this email. Ask them to sign up first, then add them.', 'user_not_found');
   const existing = await prisma.membership.findUnique({ where: { orgId_userId: { orgId: org.id, userId: user.id } } });
   if (existing) throw conflict('This user is already a member');
   await prisma.membership.create({ data: { orgId: org.id, userId: user.id, role: body.role } });

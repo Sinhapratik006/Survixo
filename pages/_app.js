@@ -19,7 +19,7 @@ export default function MyApp({ Component, pageProps }) {
   const needsGate = !isPublicPath(router.pathname);
 
   useEffect(() => {
-    const stored = localStorage.getItem('nexovra-theme');
+    const stored = localStorage.getItem('apitradex-theme');
     if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       document.documentElement.classList.add('dark');
     }

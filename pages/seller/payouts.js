@@ -284,7 +284,7 @@ export default function SellerPayouts() {
                 {summary?.nextPayoutDate ? (
                   <>Next settlement: <strong>{shortDate(summary.nextPayoutDate)} ({summary.payoutDay ?? 'Friday'})</strong>. </>
                 ) : null}
-                Until a payout provider is configured on this deployment, the weekly batch is processed manually by the Survixo ops team — payout requests are recorded, reserved, and do not disappear from your balance. No on-chain transfer is initiated automatically yet.
+                Until a payout provider is configured on this deployment, the weekly batch is processed manually by the ApiTradeX ops team — payout requests are recorded, reserved, and do not disappear from your balance. No on-chain transfer is initiated automatically yet.
               </p>
             </div>
           </div>

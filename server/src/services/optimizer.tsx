@@ -118,7 +118,7 @@ export async function analyzeUsage(orgId: string) {
       }
     }
   }
-  if (!recs.some((r) => r.type === 'prompt_caching')) notApplicable.push('Prompt caching: none of the models you use declare support on Nexovra yet.');
+  if (!recs.some((r) => r.type === 'prompt_caching')) notApplicable.push('Prompt caching: none of the models you use declare support on ApiTradeX yet.');
   if (!recs.some((r) => r.type === 'batching')) notApplicable.push('Batch processing: no batch API is offered for the models you use.');
 
   const avgIn = reqStats._avg.inputTokens ?? 0;

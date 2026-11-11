@@ -41,12 +41,17 @@ export default function LoginPage() {
         <div className="max-w-md w-full">
           <div className="text-center mb-10">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-600 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-500/30 relative overflow-hidden">
-              <span className="text-white font-bold text-sm">N</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-full h-full" fill="none" stroke="#FFFFFF" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 20 L12 4 L18 20"/>
+                <path d="M9 14 L15 14"/>
+                <path d="M20 4 L20 20"/>
+                <path d="M18 6 L22 6"/>
+              </svg>
               <div className="absolute inset-0 bg-white/10" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Welcome back</h2>
             <p className="text-slate-600 dark:text-slate-300">
-              Sign in to your Nexovra account
+              Sign in to your ApiTradeX account
             </p>
           </div>
 

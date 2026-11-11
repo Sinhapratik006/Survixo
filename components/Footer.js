@@ -29,10 +29,15 @@ export default function Footer() {
           <div className="col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2 mb-5">
               <div className="w-8 h-8 rounded-2xl bg-gradient-to-br from-brand-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-brand-500/30 relative overflow-hidden">
-                <span className="text-white font-bold text-xs">N</span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-full h-full" fill="none" stroke="#FFFFFF" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 20 L12 4 L18 20"/>
+                  <path d="M9 14 L15 14"/>
+                  <path d="M20 4 L20 20"/>
+                  <path d="M18 6 L22 6"/>
+                </svg>
                 <div className="absolute inset-0 bg-white/10" />
               </div>
-              <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">Nexovra</span>
+              <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">ApiTradeX</span>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
               The unified OpenAI-compatible API for AI inference with intelligent routing,
@@ -40,7 +45,7 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-4 mt-6">
               <a
-                href="mailto:hello@nexovra.local"
+                href="mailto:hello@apitradex.local"
                 className="w-8 h-8 rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 flex items-center justify-center hover:bg-brand-600 hover:text-white hover:border-brand-600 transition-all duration-200"
                 aria-label="Email"
               >
@@ -111,7 +116,7 @@ export default function Footer() {
         </div>
         <div className="border-t border-slate-100 dark:border-navy-800/30 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-slate-400 dark:text-slate-500">
-            &copy; {new Date().getFullYear()} Nexovra. All rights reserved.
+            &copy; {new Date().getFullYear()} ApiTradeX. All rights reserved.
           </p>
           <div className="flex items-center gap-6 text-xs text-slate-400 dark:text-slate-500">
             <span className="flex items-center gap-1">
