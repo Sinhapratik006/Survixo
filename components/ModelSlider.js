@@ -187,14 +187,20 @@ export default function ModelSlider({
                           </span>
                           {(model.capabilities || [])
                             .slice(0, 2)
-                            .map((cap) => (
-                              <span
-                                key={cap}
-                                className="ml-auto text-[10px] font-medium px-2 py-0.5 rounded border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-300 uppercase tracking-tighter"
-                              >
-                                {cap}
-                              </span>
-                            ))}
+                            .map((cap) => {
+                              // The API returns capability rows as objects
+                              // ({ capability, status, source }); tolerate plain strings too.
+                              const label = typeof cap === 'string' ? cap : cap?.capability;
+                              if (!label) return null;
+                              return (
+                                <span
+                                  key={label}
+                                  className="ml-auto text-[10px] font-medium px-2 py-0.5 rounded border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800 text-slate-600 dark:text-slate-300 uppercase tracking-tighter"
+                                >
+                                  {label}
+                                </span>
+                              );
+                            })}
                         </div>
                         <div className="flex-1">
                           <h3 className="font-semibold text-slate-900 dark:text-white leading-tight">
