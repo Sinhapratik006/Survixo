@@ -35,7 +35,7 @@ model User {
   accounts       OAuthAccount[]
   sessions       Session[]
   memberships    Membership[]
-  apiKeysCreated ApiKey[]         @relation("ApiKeyCreator")
+  apiKeysCreated ApiKey[]   @relation("ApiKeyCreator")
   favorites      Favorite[]
   comparisons    SavedComparison[]
   auditLogs      AuditLog[]
@@ -610,18 +610,18 @@ enum PayoutStatus {
 }
 
 model Payout {
-  id           String       @id @default(cuid())
-  orgId        String
-  amountMicros BigInt
-  status       PayoutStatus @default(REQUESTED)
-  destination  String?
-  externalRef  String?
-  note         String?
-  requestedById String?
-  createdAt    DateTime     @default(now())
-  processedAt  DateTime?
+  id               String            @id @default(cuid())
+  orgId            String
+  amountMicros     BigInt
+  status           PayoutStatus     @default(REQUESTED)
+  destination      String?
+  externalRef      String?
+  note             String?
+  requestedById    String?          // User who requested this payout
+  createdAt        DateTime         @default(now())
+  processedAt      DateTime?
 
-  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  org  Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   @@index([orgId, createdAt])
 }
@@ -706,17 +706,21 @@ model Order {
 }
 
 model CryptoPayoutAccount {
-  id           String   @id @default(cuid())
-  orgId        String   @unique
-  walletAddress String
-  network      PayoutNetwork @default(ETHEREUM)
-  isVerified   Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(cuid())
+  orgId            String   @unique
+  userId           String?  // Link to the User who owns this payout wallet
+  name             String?  // User's name for display
+  email            String?  // User's email for display
+  walletAddress    String
+  network          PayoutNetwork @default(ETHEREUM)
+  isVerified       Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   @@index([orgId])
+  @@index([userId])
 }
 
 // ─────────────────────────── Webhooks & alerts ───────────────────────────

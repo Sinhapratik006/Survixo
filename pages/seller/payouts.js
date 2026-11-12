@@ -52,6 +52,7 @@ export default function SellerPayouts() {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState(null);
   const [wallet, setWallet] = useState(null);
+  const [user, setUser] = useState(null);
   const [sales, setSales] = useState([]);
   const [payouts, setPayouts] = useState([]);
   const [loadError, setLoadError] = useState('');
@@ -74,8 +75,10 @@ export default function SellerPayouts() {
       try {
         const res = await api.get('/api/auth/me');
         if (cancelled) return;
-        if (res.data && res.data.user) setCheckingAuth(false);
-        else window.location.href = '/login?next=/seller/payouts';
+        if (res.data && res.data.user) {
+          setCheckingAuth(false);
+          setUser(res.data.user);
+        } else window.location.href = '/login?next=/seller/payouts';
       } catch (e) {
         if (cancelled) return;
         if (e.status === 401 || e.status === 403) {
@@ -303,6 +306,13 @@ export default function SellerPayouts() {
                   ) : (
                     <Badge variant="secondary" className="ml-auto">Pending verification</Badge>
                   )
+                ) &&
+                user && (
+                  <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    <div>ID: {user.id}</div>
+                    {user.name && <div>Name: {user.name}</div>}
+                    {user.email && <div>Email: {user.email}</div>}
+                  </div>
                 )}
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
@@ -404,17 +414,21 @@ export default function SellerPayouts() {
                   <p className="text-sm text-slate-500 dark:text-slate-400 py-6 text-center">No payouts yet.</p>
                 ) : (
                   <ul className="divide-y divide-slate-200 dark:divide-navy-700">
-                    {payouts.slice(0, 8).map((p) => (
-                      <li key={p.id} className="py-3 flex items-center gap-3">
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-semibold text-slate-900 dark:text-white tabular-nums">{formatUsd(p.amountUsd)}</div>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-500">
-                            {shortDate(p.createdAt)}{p.destination ? ` · ${p.destination}` : ''}
+                    {payouts.slice(0, 8).map((p) => {
+                      const requestingUser = user?.id === p.requestedById ? user : null;
+                      return (
+                        <li key={p.id} className="py-3 flex items-center gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-semibold text-slate-900 dark:text-white tabular-nums">{formatUsd(p.amountUsd)}</div>
+                            <div className="text-[11px] text-slate-500 dark:text-slate-500">
+                              {shortDate(p.createdAt)}{p.destination ? ` · ${p.destination}` : ''}
+                              {requestingUser && <div className="mt-1 text-[10px] text-slate-400 dark:text-slate-300">By: {requestingUser.name || ''} ({requestingUser.email ? `(${requestingUser.email})` : '' | `ID: ${requestingUser.id}`)}</div>}
+                            </div>
                           </div>
-                        </div>
-                        <Badge variant={PAYOUT_STATUS_VARIANT[p.status] ?? 'outline'}>{p.status}</Badge>
-                      </li>
-                    ))}
+                          <Badge variant={PAYOUT_STATUS_VARIANT[p.status] ?? 'outline'}>{p.status}</Badge>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>
