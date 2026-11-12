@@ -5,7 +5,7 @@ import type { StreamSink } from '../services/inference.js';
 export function createSseSink(req: Request, res: Response): StreamSink {
   let closed = false;
   const listeners: Array<() => void> = [];
-  res.on('close', () => {
+  res.once('close', () => {
     if (!res.writableFinished) {
       closed = true;
       listeners.forEach((cb) => cb());
