@@ -788,10 +788,25 @@ marketplaceRouter.get('/payout-account', async (req, res) => {
 marketplaceRouter.post('/payout-account', async (req, res) => {
   const body = parse(payoutAccountSchema, req.body);
 
+  const user = req.auth?.user;
   const account = await prisma.cryptoPayoutAccount.upsert({
     where: { orgId: req.org!.id },
-    update: { walletAddress: body.walletAddress, network: body.network, isVerified: false },
-    create: { orgId: req.org!.id, walletAddress: body.walletAddress, network: body.network },
+    update: {
+      walletAddress: body.walletAddress,
+      network: body.network,
+      isVerified: false,
+      userId: user?.id,
+      name: user?.name,
+      email: user?.email,
+    },
+    create: {
+      orgId: req.org!.id,
+      walletAddress: body.walletAddress,
+      network: body.network,
+      userId: user?.id,
+      name: user?.name,
+      email: user?.email,
+    },
   });
 
   await audit({
