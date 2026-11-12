@@ -1,6 +1,7 @@
 # Production image: builds the SPA and the API, serves both from one Node process.
 FROM node:22-alpine AS build
 WORKDIR /app
+ENV NEXT_OUTPUT_EXPORT=true
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
 RUN npm ci
