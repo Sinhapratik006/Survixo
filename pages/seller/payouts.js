@@ -422,7 +422,7 @@ export default function SellerPayouts() {
                             <div className="text-sm font-semibold text-slate-900 dark:text-white tabular-nums">{formatUsd(p.amountUsd)}</div>
                             <div className="text-[11px] text-slate-500 dark:text-slate-500">
                               {shortDate(p.createdAt)}{p.destination ? ` · ${p.destination}` : ''}
-                              {requestingUser && <div className="mt-1 text-[10px] text-slate-400 dark:text-slate-300">By: {requestingUser.name || ''} ({requestingUser.email ? `(${requestingUser.email})` : '' | `ID: ${requestingUser.id}`)}</div>}
+                              {requestingUser && <div className="mt-1 text-[10px] text-slate-400 dark:text-slate-300">By: {requestingUser.name || ''}{requestingUser.email ? ` (${requestingUser.email})` : ` ID: ${requestingUser.id}`}</div>}
                             </div>
                           </div>
                           <Badge variant={PAYOUT_STATUS_VARIANT[p.status] ?? 'outline'}>{p.status}</Badge>
