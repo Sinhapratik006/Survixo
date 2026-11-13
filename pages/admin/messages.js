@@ -103,6 +103,11 @@ export default function AdminMessages() {
       setSending(false);
       return;
     }
+    if (!activeConversation?.id) {
+      setError('No conversation selected');
+      setSending(false);
+      return;
+    }
     setSending(true);
     setError(null);
     setSuccess(null);
@@ -124,6 +129,11 @@ export default function AdminMessages() {
     e.preventDefault();
     if (!isAdmin) {
       setError('You must be an admin to start conversations');
+      setSending(false);
+      return;
+    }
+    if (!activeConversation?.id) {
+      setError('No conversation selected');
       setSending(false);
       return;
     }
