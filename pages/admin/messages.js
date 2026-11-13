@@ -5,7 +5,7 @@ import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Badge from '../../components/ui/badge';
 import { api } from '../../lib/api.js';
-import { Send, Mail, User, ShieldCheck, Clock, Search, Plus } from 'lucide-react';
+import { Send, Mail, ArrowLeft, User, ShieldCheck, Clock, Search, Plus } from 'lucide-react';
 
 export default function AdminMessages() {
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -98,6 +98,11 @@ export default function AdminMessages() {
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
+    if (!isAdmin) {
+      setError('You must be an admin to send messages');
+      setSending(false);
+      return;
+    }
     setSending(true);
     setError(null);
     setSuccess(null);
@@ -117,6 +122,11 @@ export default function AdminMessages() {
 
   const handleStartConversation = async (e) => {
     e.preventDefault();
+    if (!isAdmin) {
+      setError('You must be an admin to start conversations');
+      setSending(false);
+      return;
+    }
     setSending(true);
     setError(null);
     setSuccess(null);
@@ -353,7 +363,7 @@ export default function AdminMessages() {
                 </button>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
-                    {activeConversation.participants.map((p) => (
+                    {activeConversation?.participants?.map((p) => (
                       <div key={p.id} className="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center">
                         {p.role === 'ADMIN' ? (
                           <ShieldCheck className="w-4 h-4 text-brand-600 dark:text-brand-400" />
@@ -365,7 +375,7 @@ export default function AdminMessages() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-900 dark:text-white">
-                      {activeConversation.participants.map((p) => p.name || p.email).join(' & ')}
+                      {activeConversation?.participants?.map((p) => p.name || p.email).join(' & ')}
                     </p>
                   </div>
                 </div>
