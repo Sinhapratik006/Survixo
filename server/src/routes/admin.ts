@@ -125,16 +125,23 @@ adminRouter.get('/messages/conversations/:id/messages', requireAdmin, async (req
   const { id } = req.params;
   const conversationId = typeof id === 'string' ? id : id?.[0];
 
-  const conversation = await prisma.conversation.findUnique({
+  const conversation = (await prisma.conversation.findUnique({
     where: { id: conversationId },
     include: {
+      participants: { select: { id: true, email: true, name: true, role: true } },
       messages: {
         orderBy: { createdAt: 'asc' },
         include: { sender: { select: { id: true, name: true, email: true, role: true } } },
       },
-      participants: { select: { id: true, email: true, name: true, role: true } },
     },
-  });
+  })) as {
+    participants: { id: string; email: string; name: string; role: string }[];
+    messages: { id: string; body: string; senderId: string; sender: { id: string; name: string; email: string; role: string }; createdAt: Date; readAt: Date | null }[];
+    id: string;
+    title: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  };
   if (!conversation) return next(notFound('Conversation not found'));
 
   res.json({
@@ -230,7 +237,18 @@ adminRouter.post('/messages/conversations/:id/messages', requireAdmin, async (re
   const conversationId = typeof id === 'string' ? id : id?.[0];
   const { body } = parse(adminSendMessageSchema, req.body);
 
-  const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
+  const conversation = (await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    include: {
+      participants: { select: { id: true, email: true, name: true, role: true } },
+    },
+  })) as {
+    participants: { id: string; email: string; name: string; role: string }[];
+    id: string;
+    title: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  };
   if (!conversation) return next(notFound('Conversation not found'));
 
   // Verify the admin is a participant in this conversation
