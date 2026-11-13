@@ -617,6 +617,8 @@ model Payout {
   destination      String?
   externalRef      String?
   note             String?
+  email            String?          // Payout recipient email
+  name             String?          // Payout recipient name
   requestedById    String?          // User who requested this payout
   createdAt        DateTime         @default(now())
   processedAt      DateTime?

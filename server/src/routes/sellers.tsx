@@ -390,19 +390,19 @@ sellersRouter.get('/health-log', requirePermission('seller:view'), async (req, r
 sellersRouter.get('/payouts', requirePermission('seller:view'), async (req, res) => {
   const payouts = await prisma.payout.findMany({ where: { orgId: req.org!.id }, orderBy: { createdAt: 'desc' }, take: 50 });
   res.json({
-    data: payouts.map((p) => ({ id: p.id, amountUsd: microsToUsd(p.amountMicros), status: p.status, destination: p.destination, externalRef: p.externalRef, note: p.note, createdAt: p.createdAt, processedAt: p.processedAt })),
+    data: payouts.map((p) => ({ id: p.id, amountUsd: microsToUsd(p.amountMicros), status: p.status, destination: p.destination, externalRef: p.externalRef, note: p.note, email: p.email, name: p.name, createdAt: p.createdAt, processedAt: p.processedAt })),
     payoutProviderConfigured: false,
     notice: 'No payout provider is configured. Payout requests are recorded and funds are reserved, but no money is transferred until an operator processes them.',
   });
 });
 
-const payoutSchema = z.object({ amountUsd: z.number().min(25, 'The minimum payout is $25.00').max(1_000_000), destination: z.string().trim().max(200).optional() });
+const payoutSchema = z.object({ amountUsd: z.number().min(25, 'The minimum payout is $25.00').max(1_000_000), destination: z.string().trim().max(200).optional(), email: z.string().email().optional(), name: z.string().optional() });
 
 sellersRouter.post('/payouts', requirePermission('seller:manage'), rateLimit({ name: 'payout', windowSeconds: 3600, max: 5, key: userKey }), async (req, res) => {
   const body = parse(payoutSchema, req.body);
-  const payout = await requestPayout(req.org!.id, usdToMicros(body.amountUsd), body.destination ?? null, req.auth!.user.id);
+  const payout = await requestPayout(req.org!.id, usdToMicros(body.amountUsd), body.destination ?? null, req.auth!.user.id, body.email, body.name);
   if (!payout) throw badRequest('Insufficient seller balance for this payout', undefined, 'insufficient_seller_balance');
   await audit({ orgId: req.org!.id, actorUserId: req.auth!.user.id, action: 'seller.payout.requested', targetType: 'payout', targetId: payout.id, ip: clientIp(req), metadata: { amountUsd: body.amountUsd } });
   await emitEvent({ orgId: req.org!.id, type: 'payout.updated', title: `Payout of $${body.amountUsd.toFixed(2)} requested`, body: 'The payout is awaiting processing.', data: { payout_id: payout.id, status: payout.status, amount_usd: body.amountUsd } });
-  res.status(201).json({ payout: { id: payout.id, amountUsd: microsToUsd(payout.amountMicros), status: payout.status, createdAt: payout.createdAt } });
+  res.status(201).json({ payout: { id: payout.id, amountUsd: microsToUsd(payout.amountMicros), status: payout.status, createdAt: payout.createdAt, email: payout.email, name: payout.name } });
 });

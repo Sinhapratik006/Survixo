@@ -233,14 +233,14 @@ export async function creditBalance(input: {
 }
 
 /** Move seller earnings into a payout request. Atomic; fails if the seller balance is insufficient. */
-export async function requestPayout(orgId: string, amountMicros: bigint, destination: string | null, userId: string) {
+export async function requestPayout(orgId: string, amountMicros: bigint, destination: string | null, userId: string, email?: string, name?: string) {
   return prisma.$transaction(async (tx) => {
     const rows = await tx.$queryRaw<Array<{ sellerBalanceMicros: bigint }>>`
       UPDATE "Organization" SET "sellerBalanceMicros" = "sellerBalanceMicros" - ${amountMicros}
       WHERE id = ${orgId} AND "sellerBalanceMicros" >= ${amountMicros} RETURNING "sellerBalanceMicros"`;
     if (!rows.length) return null;
     const payout = await tx.payout.create({
-      data: { orgId, amountMicros, destination, requestedById: userId, status: 'REQUESTED' },
+      data: { orgId, amountMicros, destination, requestedById: userId, status: 'REQUESTED', email, name },
     });
     await tx.billingTransaction.create({
       data: {
