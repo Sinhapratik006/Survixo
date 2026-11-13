@@ -143,6 +143,10 @@ marketplaceRouter.get('/listings', async (req, res) => {
     prisma.marketplaceListing.count({ where }),
   ]);
 
+  const sellerNames = new Map(
+    listings.map((l) => [l.id, l.sellerOrg?.name || 'Unknown'])
+  );
+
   const hasMore = listings.length > q.limit;
   const data = hasMore ? listings.slice(0, -1) : listings;
   const nextCursor = hasMore ? data[data.length - 1]!.id : null;
@@ -153,6 +157,7 @@ marketplaceRouter.get('/listings', async (req, res) => {
       priceUsd: (l.priceCents / 100).toFixed(2),
       creditValueUsd: creditValueUsd(l.priceCents),
       isSoldOut: l.maxBuyers !== null && l.buyerCount >= l.maxBuyers,
+      sellerName: sellerNames.get(l.id) || 'Unknown',
     })),
     total,
     nextCursor,
@@ -650,6 +655,7 @@ marketplaceRouter.get('/my-listings', async (req, res) => {
     take: 50,
     include: {
       _count: { select: { orders: true } },
+      sellerOrg: { select: { id: true, name: true, slug: true } },
     },
   });
   res.json({
@@ -664,6 +670,7 @@ marketplaceRouter.get('/my-listings', async (req, res) => {
       maxBuyers: l.maxBuyers,
       orderCount: l._count.orders,
       createdAt: l.createdAt,
+      sellerName: l.sellerOrg?.name || 'Unknown',
     })),
   });
 });

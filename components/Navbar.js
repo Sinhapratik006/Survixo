@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Button from './Button';
-import { Menu, X, Sun, Moon, Globe, DollarSign, BarChart3, Key, ShieldCheck, LogOut, User } from 'lucide-react';
+import { Menu, X, Sun, Moon, Globe, DollarSign, BarChart3, Key, ShieldCheck, LogOut, User, Mail } from 'lucide-react';
 import { api } from '../lib/api.js';
 
 const navLinks = [
@@ -11,6 +11,7 @@ const navLinks = [
   { name: 'Seller', href: '/seller/dashboard', icon: ShieldCheck },
   { name: 'Calculator', href: '/calculator', icon: DollarSign },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { name: 'Messages', href: '/messages', icon: Mail },
 ];
 
 export default function Navbar() {
@@ -18,6 +19,8 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [dark, setDark] = useState(false);
   const [authed, setAuthed] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('apitradex-theme');
@@ -29,8 +32,18 @@ export default function Navbar() {
       try {
         const res = await api.get('/api/auth/me');
         setAuthed(!!res.data.user);
+        setIsAdmin(res.data.user?.role === 'ADMIN');
       } catch {
         setAuthed(false);
+      }
+    })();
+    // Fetch unread message count
+    (async () => {
+      try {
+        const res = await api.get('/api/messages/unread-count');
+        setUnreadCount(res.data.unreadCount || 0);
+      } catch {
+        // silent
       }
     })();
   }, []);
@@ -77,16 +90,31 @@ export default function Navbar() {
                   className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1.5"
                 >
                   <Icon className="w-4 h-4" /> {link.name}
+                  {link.name === 'Messages' && unreadCount > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 rounded-full bg-rose-600 text-[10px] text-white font-bold">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
             {authed === true && (
-              <Link
-                href="/profile"
-                className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1.5"
-              >
-                <User className="w-4 h-4" /> Profile
-              </Link>
+              <>
+                <Link
+                  href="/profile"
+                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1.5"
+                >
+                  <User className="w-4 h-4" /> Profile
+                </Link>
+                {isAdmin && (
+                  <Link
+                    href="/admin/messages"
+                    className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1.5"
+                  >
+                    <ShieldCheck className="w-4 h-4" /> Admin Messages
+                  </Link>
+                )}
+              </>
             )}
             <div className="flex items-center gap-3">
               {authed === true && (

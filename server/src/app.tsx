@@ -24,6 +24,7 @@ import { teamsRouter } from './routes/teams.js';
 import { comparisonsRouter, favoritesRouter, settingsRouter } from './routes/settings.js';
 import { alertsRouter, webhooksRouter } from './routes/alerts.js';
 import { adminRouter } from './routes/admin.js';
+import { messagesRouter } from './routes/messages.js';
 import { v1Router } from './routes/v1.js';
 import { marketplaceRouter, dodoWebhookRouter } from './routes/marketplace.js';
 
@@ -140,6 +141,7 @@ export function createApp() {
   authed.use('/alerts', alertsRouter);
   authed.use('/webhooks', webhooksRouter);
   authed.use('/admin', adminRouter);
+  authed.use('/messages', messagesRouter);
   api.use('/marketplace', marketplaceRouter);
   api.use(authed);
   app.use('/api', api);

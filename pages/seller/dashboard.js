@@ -179,6 +179,9 @@ export default function SellerDashboard() {
                     <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 line-clamp-2">
                       {listing.description || 'No description'}
                     </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      by {listing.sellerName || 'Unknown'}
+                    </p>
                     <div className="mt-2 flex items-baseline gap-2">
                       <span className="text-xs text-slate-600 dark:text-slate-300">
                         You get {formatUsd(sellerPayoutFromBuyerPrice(listing.priceUsd))} · buyer pays {formatUsd(listing.priceUsd)}

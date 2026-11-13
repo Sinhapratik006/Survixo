@@ -1,6 +1,6 @@
-import { Router } from 'express';
+import { Router, type NextFunction, type Request, type Response } from 'express';
 import { prisma } from '../lib/prisma.js';
-import { notFound } from '../lib/errors.js';
+import { notFound, forbidden, badRequest, unauthorized } from '../lib/errors.js';
 import { microsToUsd } from '../lib/money.js';
 import { InferenceError } from '../services/inference.js';
 import { runArithmeticBenchmark } from '../services/benchmark.js';
@@ -74,4 +74,179 @@ adminRouter.post('/marketplace/payout-accounts/:id/verify', requireAdmin, async 
     metadata: { network: account.network },
   });
   res.json({ account: { id: account.id, orgId: account.orgId, network: account.network, isVerified: account.isVerified } });
+});
+
+// ─────────────────────────── Admin Messaging ───────────────────────────
+
+/** List all users (for admin to start conversations). */
+adminRouter.get('/messages/users', requireAdmin, async (_req: Request, res: Response) => {
+  const users = await prisma.user.findMany({
+    where: { deletedAt: null },
+    select: { id: true, email: true, name: true, role: true, avatarUrl: true, createdAt: true },
+    orderBy: { createdAt: 'desc' },
+    take: 100,
+  });
+  res.json({ data: users });
+});
+
+/** List all platform conversations (admin only). */
+adminRouter.get('/messages/conversations', requireAdmin, async (_req: Request, res: Response) => {
+  const conversations = await prisma.conversation.findMany({
+    include: {
+      participants: {
+        select: { id: true, email: true, name: true, role: true, avatarUrl: true },
+      },
+      messages: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        include: { sender: { select: { id: true, name: true, email: true } } },
+      },
+      _count: { select: { messages: { where: { readAt: null } } } },
+    },
+    orderBy: { updatedAt: 'desc' },
+  });
+
+  res.json({
+    data: conversations.map((c) => ({
+      id: c.id,
+      title: c.title,
+      participants: c.participants,
+      lastMessage: c.messages[0]
+        ? { body: c.messages[0].body, createdAt: c.messages[0].createdAt, senderId: c.messages[0].senderId }
+        : null,
+      unreadCount: c._count.messages,
+      updatedAt: c.updatedAt,
+    })),
+  });
+});
+
+/** Get messages in any conversation (admin only). */
+adminRouter.get('/messages/conversations/:id/messages', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  const { id } = req.params;
+  const conversationId = typeof id === 'string' ? id : id?.[0];
+
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    include: {
+      messages: {
+        orderBy: { createdAt: 'asc' },
+        include: { sender: { select: { id: true, name: true, email: true, role: true } } },
+      },
+      participants: { select: { id: true, email: true, name: true, role: true } },
+    },
+  });
+  if (!conversation) return next(notFound('Conversation not found'));
+
+  res.json({
+    conversation: {
+      id: conversation.id,
+      title: conversation.title,
+      participants: conversation.participants,
+    },
+    messages: conversation.messages.map((m) => ({
+      id: m.id,
+      body: m.body,
+      senderId: m.senderId,
+      sender: m.sender,
+      readAt: m.readAt,
+      createdAt: m.createdAt,
+    })),
+  });
+});
+
+/** Start a new conversation with any user (admin only). */
+const adminStartConversationSchema = z.object({
+  participantId: z.string().min(1),
+  body: z.string().trim().min(1).max(5000),
+});
+adminRouter.post('/messages/conversations', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  const adminId = req.auth!.user.id;
+  const { participantId, body } = parse(adminStartConversationSchema, req.body);
+
+  if (participantId === adminId) return next(badRequest('Cannot start a conversation with yourself'));
+
+  const participant = await prisma.user.findUnique({
+    where: { id: participantId, deletedAt: null },
+    select: { id: true, email: true, name: true, role: true },
+  });
+  if (!participant) return next(notFound('User not found'));
+
+  const existing = await prisma.conversation.findFirst({
+    where: {
+      participants: { some: { id: adminId } },
+      AND: { participants: { some: { id: participantId } } },
+    },
+  });
+  if (existing) {
+    const message = await prisma.message.create({
+      data: { conversationId: existing.id, senderId: adminId, body },
+      include: { sender: { select: { id: true, name: true, email: true, role: true } } },
+    });
+    await prisma.conversation.update({ where: { id: existing.id }, data: { updatedAt: new Date() } });
+    return res.status(200).json({
+      conversationId: existing.id,
+      message: {
+        id: message.id,
+        body: message.body,
+        senderId: message.senderId,
+        sender: message.sender,
+        createdAt: message.createdAt,
+      },
+    });
+  }
+
+  const conversation = await prisma.conversation.create({
+    data: {
+      title: null,
+      participants: { connect: [{ id: adminId }, { id: participantId }] },
+      messages: { create: { senderId: adminId, body } },
+    },
+    include: {
+      participants: { select: { id: true, email: true, name: true, role: true } },
+      messages: { take: 1, orderBy: { createdAt: 'desc' } },
+    },
+  });
+  await prisma.conversation.update({ where: { id: conversation.id }, data: { updatedAt: new Date() } });
+
+  const message = conversation.messages[0];
+  res.status(201).json({
+    conversationId: conversation.id,
+    participants: conversation.participants,
+    message: {
+      id: message!.id,
+      body: message!.body,
+      senderId: message!.senderId,
+      sender: { id: adminId, name: req.auth!.user.name, email: req.auth!.user.email, role: req.auth!.user.role },
+      createdAt: message!.createdAt,
+    },
+  });
+});
+
+/** Send a message in any conversation (admin only). */
+const adminSendMessageSchema = z.object({ body: z.string().trim().min(1).max(5000) });
+adminRouter.post('/messages/conversations/:id/messages', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  const adminId = req.auth!.user.id;
+  const { id } = req.params;
+  const conversationId = typeof id === 'string' ? id : id?.[0];
+  const { body } = parse(adminSendMessageSchema, req.body);
+
+  const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
+  if (!conversation) return next(notFound('Conversation not found'));
+
+  const message = await prisma.message.create({
+    data: { conversationId: conversationId, senderId: adminId, body },
+    include: { sender: { select: { id: true, name: true, email: true, role: true } } },
+  });
+
+  await prisma.conversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } });
+
+  res.status(201).json({
+    message: {
+      id: message.id,
+      body: message.body,
+      senderId: message.senderId,
+      sender: message.sender,
+      createdAt: message.createdAt,
+    },
+  });
 });
