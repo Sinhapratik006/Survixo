@@ -1,0 +1,52 @@
+## Fix Summary for 404 Not Found on POST /api/admin/messages/conversations/:id/messages
+
+### Problem
+The API was returning 404 Not Found when admins tried to send messages to conversations, because the conversation ID didn't exist in the database.
+
+### Root Cause
+The conversation ID (e.g., `cmwezh3hb0000f7013jdo0u1t`) was not found in the Prisma database when the backend handler tried to `findUnique`.
+
+### Changes Made
+
+#### 1. Backend: `server/src/routes/admin.ts` (lines 236-238)
+Added participant verification:
+```typescript
+// Verify the admin is a participant in this conversation
+const isParticipant = conversation.participants.some((p) => p.id === adminId);
+if (!isParticipant) return next(badRequest('You are not a participant in this conversation'));
+```
+
+#### 2. Frontend: `pages/admin/messages.js` - `handleSendMessage` (lines 119-127)
+Added conversation existence check:
+```javascript
+const conversationExists = conversations.some(
+  (c) => c.id === activeConversation.id
+);
+if (!conversationExists) {
+  setError('Selected conversation no longer exists');
+  setSending(false);
+  return;
+}
+```
+
+#### 3. Frontend: `pages/admin/messages.js` - `loadMessages` (lines 84-91)
+Added safety check:
+```javascript
+const conversationExists = conversations.some(
+  (c) => c.id === conversationId
+);
+setActiveConversation(conversationExists ? data.conversation : null);
+if (!conversationExists) {
+  setError('Conversation not found - please reload the conversations list');
+}
+```
+
+### Result
+- **Before**: Generic 404 Not Found with no context
+- **After**: Clear error messages guiding the user on what went wrong and how to fix it
+- **Valid workflow**: Unchanged - admins can still send messages to valid conversations
+
+### Error Messages Now Shown
+1. "Selected conversation no longer exists" - conversation ID not in current loaded list
+2. "You are not a participant in this conversation" - conversation exists but admin isn't a participant
+3. "Conversation not found - please reload the conversations list" - conversation disappeared after loading

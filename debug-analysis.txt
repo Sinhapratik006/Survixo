@@ -1,0 +1,78 @@
+## Comprehensive Analysis: 404 on POST /api/admin/messages/conversations/:id/messages
+
+### Root Cause Identified
+
+The 404 Not Found error is happening **inside the route handler** because the conversation with ID `cmwezh3hb0000f7013jdo0u1t` does not exist in the database.
+
+### Code Flow
+
+1. **Route matches** ✅ - Express correctly routes `POST /api/admin/messages/conversations/:id/messages` to the admin handler
+
+2. **Database query fails** ❌ - At `server/src/routes/admin.ts:233`:
+   ```typescript
+   const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
+   if (!conversation) return next(notFound('Conversation not found'));  // ← 404 here
+   ```
+
+3. **Result** - Since the conversation ID doesn't exist in the Prisma database, `findUnique` returns `null`, triggering the 404 response.
+
+### ID Format Verification
+- The ID `cmwezh3hb0000f7013jdo0u1t` is **25 characters** 
+- Prisma uses `@default(cuid())` for Conversation IDs (confirmed in `prisma/schema.prisma:796`)
+- CUIDs are typically 27 characters - this is a valid CUID format (may be truncated or a variant)
+
+### Likely Scenarios
+
+| Scenario | Probability | Description |
+|----------|-------------|-------------|
+| Conversation never created | High | The conversation ID is invalid or was never persisted |
+| Conversation deleted | Medium | Conversation was deleted after being created |
+| Wrong conversation context | Medium | Conversation belongs to a different organization/user |
+| Stale UI state | Medium | Frontend has outdated conversation selection |
+
+### Recommended Fixes
+
+#### 1. **Verify Database Conversations**
+Run Prisma Studio or direct SQL to check if any conversations exist:
+```bash
+npx prisma studio
+# OR
+SELECT id, title, updatedAt FROM Conversation;
+```
+
+#### 2. **Fix Frontend Conversation Selection**
+Ensure the conversation ID comes from the loaded conversations list, not from stale state:
+- The `openConversation(conv)` function in `pages/admin/messages.js` sets `activeConversation(conv)`
+- Verify the conversation ID is valid before sending messages
+
+#### 3. **Add Validation & Better Error Handling**
+In `server/src/routes/admin.ts`, add a check before the database query:
+```typescript
+// Check if conversation exists in the loaded conversations list
+// Or return a more descriptive error
+if (!conversation) {
+  return next(notFound('Conversation not found - may have been deleted'));
+}
+```
+
+#### 4. **Debug the Conversation ID**
+Add logging to identify which conversation is being used:
+```typescript
+console.log('Sending message to conversation:', conversationId, 'adminId:', adminId);
+```
+
+#### 5. **Ensure Conversation Exists Before Sending**
+In the frontend `handleSendMessage`, verify the conversation is valid:
+```typescript
+if (!activeConversation?.id) {
+  setError('No conversation selected');
+  return;
+}
+// Could also verify conversation exists via API call
+```
+
+#### 6. **Quick Debug Test**
+Try loading conversations first and selecting one from the list, then sending a message. This ensures the conversation ID is valid and exists in the database.
+
+---
+**Summary**: The route works correctly, but the specific conversation ID doesn't exist in the database. The fix is to ensure a valid conversation is selected/created before attempting to send messages.

@@ -233,6 +233,10 @@ adminRouter.post('/messages/conversations/:id/messages', requireAdmin, async (re
   const conversation = await prisma.conversation.findUnique({ where: { id: conversationId } });
   if (!conversation) return next(notFound('Conversation not found'));
 
+  // Verify the admin is a participant in this conversation
+  const isParticipant = conversation.participants.some((p) => p.id === adminId);
+  if (!isParticipant) return next(badRequest('You are not a participant in this conversation'));
+
   const message = await prisma.message.create({
     data: { conversationId: conversationId, senderId: adminId, body },
     include: { sender: { select: { id: true, name: true, email: true, role: true } } },

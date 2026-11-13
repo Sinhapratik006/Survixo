@@ -79,8 +79,16 @@ export default function AdminMessages() {
     setLoading(true);
     try {
       const res = await api.get(`/api/admin/messages/conversations/${conversationId}/messages`);
-      setMessages(res.data.messages || []);
-      setActiveConversation(res.data.conversation);
+      const data = res.data || {};
+      setMessages(data.messages || []);
+      // Only set active conversation if it exists in our list, otherwise clear it
+      const conversationExists = conversations.some(
+        (c) => c.id === conversationId
+      );
+      setActiveConversation(conversationExists ? data.conversation : null);
+      if (!conversationExists) {
+        setError('Conversation not found - please reload the conversations list');
+      }
     } catch (e) {
       setError(e.message || 'Failed to load messages');
     } finally {
@@ -105,6 +113,15 @@ export default function AdminMessages() {
     }
     if (!activeConversation?.id) {
       setError('No conversation selected');
+      setSending(false);
+      return;
+    }
+    // Verify conversation exists by checking it's in our conversations list
+    const conversationExists = conversations.some(
+      (c) => c.id === activeConversation.id
+    );
+    if (!conversationExists) {
+      setError('Selected conversation no longer exists');
       setSending(false);
       return;
     }
