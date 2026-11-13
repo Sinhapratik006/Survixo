@@ -240,7 +240,15 @@ export async function requestPayout(orgId: string, amountMicros: bigint, destina
       WHERE id = ${orgId} AND "sellerBalanceMicros" >= ${amountMicros} RETURNING "sellerBalanceMicros"`;
     if (!rows.length) return null;
     const payout = await tx.payout.create({
-      data: { orgId, amountMicros, destination, requestedById: userId, status: 'REQUESTED', email, name },
+      data: {
+        orgId,
+        amountMicros,
+        destination,
+        requestedById: userId,
+        status: 'REQUESTED',
+        ...(email ? { email } : {}),
+        ...(name ? { name } : {}),
+      },
     });
     await tx.billingTransaction.create({
       data: {
