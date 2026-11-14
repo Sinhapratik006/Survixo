@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import Button from '../../components/Button';
@@ -9,6 +10,7 @@ import { Key, Plus, Copy, Trash2, RotateCw, Banknote, ShieldCheck } from 'lucide
 import { api, formatUsd } from '../../lib/api.js';
 
 export default function KeysPage() {
+  const router = useRouter();
   const [keys, setKeys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showSecret, setShowSecret] = useState(null);
@@ -35,6 +37,13 @@ export default function KeysPage() {
   useEffect(() => {
     void fetchKeys();
   }, []);
+
+  // New accounts shouldn't land on the API keys page; send them to the marketplace instead.
+  useEffect(() => {
+    if (!loading && keys.length === 0 && showSecret === null) {
+      router.replace('/marketplace');
+    }
+  }, [loading, keys, showSecret, router]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
