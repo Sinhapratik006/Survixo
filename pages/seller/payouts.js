@@ -204,7 +204,7 @@ export default function SellerPayouts() {
                     Payouts
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Your 60% cut from API key sales, paid weekly (Fridays, UTC).
+                    Your 32% cut from API key sales, paid weekly (Fridays, UTC).
                   </p>
                 </div>
               </div>
@@ -270,7 +270,7 @@ export default function SellerPayouts() {
             <ol className="grid sm:grid-cols-3 gap-4 text-sm text-slate-600 dark:text-slate-300">
               <li className="flex gap-2">
                 <span className="flex-none w-5 h-5 rounded-full bg-brand-100 dark:bg-navy-700 text-brand-700 dark:text-brand-300 text-[11px] font-bold flex items-center justify-center">1</span>
-                <span>A buyer purchases your listing. Your 60% cut is credited to your seller balance as soon as payment is confirmed.</span>
+                <span>A buyer purchases your listing. Your 32% cut is credited to your seller balance as soon as payment is confirmed.</span>
               </li>
               <li className="flex gap-2">
                 <span className="flex-none w-5 h-5 rounded-full bg-brand-100 dark:bg-navy-700 text-brand-700 dark:text-brand-300 text-[11px] font-bold flex items-center justify-center">2</span>
@@ -440,7 +440,7 @@ export default function SellerPayouts() {
             <div className="flex items-center justify-between gap-4 mb-3">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">Sales of your listings</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Every buyer purchase and your 60% cut.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Every buyer purchase and your 32% cut.</p>
               </div>
               <Button variant="outline" size="sm" onClick={() => (window.location.href = '/marketplace')}>
                 View marketplace
@@ -459,7 +459,7 @@ export default function SellerPayouts() {
                       <th className="py-2 px-2 font-medium">Listing</th>
                       <th className="py-2 px-2 font-medium">Date</th>
                       <th className="py-2 px-2 font-medium text-right">Buyer paid</th>
-                      <th className="py-2 px-2 font-medium text-right">Your cut (60%)</th>
+                      <th className="py-2 px-2 font-medium text-right">Your cut (32%)</th>
                       <th className="py-2 px-2 font-medium text-right">Status</th>
                     </tr>
                   </thead>

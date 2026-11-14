@@ -10,19 +10,19 @@ import {
 } from '../../src/lib/pricing.js';
 
 describe('marketplace credit pricing', () => {
-  it('buys credits at 60% and sells them at 75% of face value', () => {
-    // $100 of credits → we pay the seller $60, buyers pay $75, we keep $15.
-    const face = 10_000; // cents
+  it('buys credits at 32% and sells them at 76% of face value', () => {
+    // $50 of credits → we pay the seller $16, buyers pay $38, we keep $22.
+    const face = 5_000; // cents
     const price = buyerPriceCents(face);
-    expect(price).toBe(7_500);
-    expect(sellerEarningCentsFromPrice(price)).toBe(6_000);
-    expect(platformFeeCentsFromPrice(price)).toBe(1_500);
+    expect(price).toBe(3_800);
+    expect(sellerEarningCentsFromPrice(price)).toBe(1_600);
+    expect(platformFeeCentsFromPrice(price)).toBe(2_200);
   });
 
   it('keeps the published rates internally consistent', () => {
-    expect(CREDIT_BUY_RATE).toBeCloseTo(0.6, 10);
-    expect(CREDIT_SELL_RATE).toBeCloseTo(0.75, 10);
-    expect(CREDIT_PLATFORM_MARGIN_RATE).toBeCloseTo(0.15, 10);
+    expect(CREDIT_BUY_RATE).toBeCloseTo(0.32, 10);
+    expect(CREDIT_SELL_RATE).toBeCloseTo(0.76, 10);
+    expect(CREDIT_PLATFORM_MARGIN_RATE).toBeCloseTo(0.44, 10);
     // The margin is exactly the gap between what we pay and what we charge.
     expect(CREDIT_BUY_RATE + CREDIT_PLATFORM_MARGIN_RATE).toBeCloseTo(CREDIT_SELL_RATE, 10);
   });
@@ -47,8 +47,8 @@ describe('marketplace credit pricing', () => {
       const derived = creditValueCentsFromPrice(buyerPriceCents(face));
       expect(Math.abs(derived - face)).toBeLessThanOrEqual(1);
     }
-    // Exact for the headline case: $100 → $75 → $100.
-    expect(creditValueCentsFromPrice(buyerPriceCents(10_000))).toBe(10_000);
+    // Exact for the headline case: $50 → $38 → $50.
+    expect(creditValueCentsFromPrice(buyerPriceCents(5_000))).toBe(5_000);
   });
 
   it('never sells below one cent and treats invalid input as zero', () => {

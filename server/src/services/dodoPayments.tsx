@@ -101,10 +101,10 @@ export async function createDodoCheckout({
   if (listing.isSold && listing.maxBuyers !== null && listing.buyerCount >= listing.maxBuyers)
     throw new Error('Listing is sold out');
 
-  // The listing price is 75% of the credits' face value; the seller is paid
-  // 60% of face value and the platform keeps the 15% difference between the
-  // two (see lib/pricing.tsx) — $100 of credits sells for $75 and pays the
-  // seller $60.
+  // The listing price is 76% of the credits' face value; the seller is paid
+  // 32% of face value and the platform keeps the 44% difference between the
+  // two (see lib/pricing.tsx) — $50 of credits sells for $38 and pays the
+  // seller $16.
   const amountCents = listing.priceCents;
   const sellerEarningCents = sellerEarningCentsFromPrice(amountCents);
   const platformFeeCents = platformFeeCentsFromPrice(amountCents);

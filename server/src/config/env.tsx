@@ -44,7 +44,7 @@ const schema = z
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     // Inference revenue share for offer sellers (not marketplace listings —
-    // those use the fixed 60/75 credit split in lib/pricing.tsx).
+    // those use the fixed 32/76 credit split in lib/pricing.tsx).
     PLATFORM_FEE_BPS: z.coerce.number().int().min(0).max(5000).default(500),
     SIGNUP_DEMO_CREDIT_USD: z.coerce.number().min(0).max(100).default(5),
 

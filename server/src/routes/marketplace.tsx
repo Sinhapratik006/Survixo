@@ -196,7 +196,7 @@ marketplaceRouter.use(requireOrg());
 
 /**
  * A listing is priced from the face value of the API credits being sold:
- * the platform buys at 60% of that value and lists at 75% (see lib/pricing).
+ * the platform buys at 32% of that value and lists at 76% (see lib/pricing).
  * `priceUsd` is accepted as a legacy alias for `creditValueUsd`.
  */
 const creditValueField = z.coerce.number().min(0.01).max(100_000);
@@ -281,7 +281,7 @@ marketplaceRouter.post('/listings', requirePermission('seller:manage'), async (r
   const orgId = req.org!.id;
 
   const creditCents = Math.round((body.creditValueUsd ?? body.priceUsd!) * 100);
-  // What buyers pay: 75% of the credits' face value.
+  // What buyers pay: 76% of the credits' face value.
   const amountCents = buyerPriceCents(creditCents);
 
   // Gate on key health first — a listing is only as good as the credential

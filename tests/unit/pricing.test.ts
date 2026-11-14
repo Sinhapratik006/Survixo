@@ -11,27 +11,27 @@ import {
 } from '../../lib/pricing';
 
 describe('marketplace credit pricing (web)', () => {
-  it('buys at 60% and sells at 75% of face value', () => {
-    // $100 of credits → the seller receives $60, buyers pay $75, we keep $15.
-    expect(CREDIT_BUY_PCT).toBe(60);
-    expect(CREDIT_SELL_PCT).toBe(75);
-    expect(CREDIT_PLATFORM_MARGIN_PCT).toBe(15);
-    expect(sellerPayout(100)).toBe(60);
-    expect(buyerPrice(100)).toBe(75);
-    expect(platformMargin(100)).toBe(15);
-    expect(sellerPayout(100) + platformMargin(100)).toBe(buyerPrice(100));
+  it('buys at 32% and sells at 76% of face value', () => {
+    // $50 of credits → the seller receives $16, buyers pay $38, we keep $22.
+    expect(CREDIT_BUY_PCT).toBe(32);
+    expect(CREDIT_SELL_PCT).toBe(76);
+    expect(CREDIT_PLATFORM_MARGIN_PCT).toBe(44);
+    expect(sellerPayout(50)).toBe(16);
+    expect(buyerPrice(50)).toBe(38);
+    expect(platformMargin(50)).toBe(22);
+    expect(sellerPayout(50) + platformMargin(50)).toBe(buyerPrice(50));
   });
 
   it('derives the seller payout from the buyer price the API reports', () => {
-    expect(sellerPayoutFromBuyerPrice(75)).toBe(60);
-    expect(creditValueFromBuyerPrice(75)).toBe(100);
+    expect(sellerPayoutFromBuyerPrice(38)).toBe(16);
+    expect(creditValueFromBuyerPrice(38)).toBe(50);
     // The API returns prices as strings.
-    expect(sellerPayoutFromBuyerPrice('75.00')).toBe(60);
-    expect(creditValueFromBuyerPrice('75.00')).toBe(100);
+    expect(sellerPayoutFromBuyerPrice('38.00')).toBe(16);
+    expect(creditValueFromBuyerPrice('38.00')).toBe(50);
   });
 
   it('handles fractional and empty input safely', () => {
-    expect(sellerPayout(0.01)).toBeCloseTo(0.006, 10);
+    expect(sellerPayout(0.01)).toBeCloseTo(0.0032, 10);
     expect(sellerPayout('')).toBe(0);
     expect(buyerPrice(undefined)).toBe(0);
   });
