@@ -7,11 +7,52 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function runDeploy() {
+function deriveDirectUrl(url) {
+  if (!url) return url;
+  try {
+    const parsed = new URL(url);
+    // Neon pooler endpoints include "-pooler" in the hostname and do not support
+    // session-level advisory locks reliably. Prefer the direct endpoint for migrations.
+    if (parsed.hostname.includes('-pooler.')) {
+      parsed.hostname = parsed.hostname.replace('-pooler.', '.');
+      parsed.searchParams.delete('pgbouncer');
+      return parsed.toString();
+    }
+  } catch {
+    // If URL parsing fails, fall back to the original value.
+  }
+  return url;
+}
+
+function migrationEnv() {
+  const env = { ...process.env };
+  const databaseUrl = env.DATABASE_URL;
+  let directUrl = env.DIRECT_URL || databaseUrl;
+
+  if (directUrl && directUrl === databaseUrl) {
+    const derived = deriveDirectUrl(directUrl);
+    if (derived !== directUrl) {
+      console.log(
+        'Detected a pooled database host for migrations; using a derived direct connection URL for prisma migrate deploy.',
+      );
+      directUrl = derived;
+    }
+  }
+
+  if (!env.DIRECT_URL && directUrl) {
+    env.DIRECT_URL = directUrl;
+  } else if (directUrl && env.DIRECT_URL !== directUrl) {
+    env.DIRECT_URL = directUrl;
+  }
+
+  return env;
+}
+
+function runDeploy(env) {
   const result = spawnSync('npx', ['--no-install', 'prisma', 'migrate', 'deploy'], {
     stdio: 'pipe',
     encoding: 'utf8',
-    env: process.env,
+    env,
     shell: process.platform === 'win32',
   });
   if (result.stdout) process.stdout.write(result.stdout);
@@ -20,8 +61,10 @@ function runDeploy() {
   return { status: result.status ?? 1, output };
 }
 
+const env = migrationEnv();
+
 for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-  const { status, output } = runDeploy();
+  const { status, output } = runDeploy(env);
   if (status === 0) {
     process.exit(0);
   }
@@ -40,7 +83,7 @@ for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
         'This usually means another deploy/migration is still running, a previous migration session is stuck, or DATABASE_URL points at a pooled/transaction-mode connection.',
       );
       console.error(
-        'If you use a connection pooler, set DIRECT_URL to a direct (session-level) database URL for migrations. See https://pris.ly/d/migrate-advisory-locking',
+        'Set DIRECT_URL to a direct (session-level/non-pooled) database URL for migrations (for Neon, use the host without "-pooler"). Keep DATABASE_URL as your pooled/runtime URL if needed. See https://pris.ly/d/migrate-advisory-locking',
       );
     }
     process.exit(status);
