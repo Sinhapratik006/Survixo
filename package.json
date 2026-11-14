@@ -19,7 +19,7 @@
     "db:local": "node scripts/local-db.mjs",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy",
+    "db:deploy": "node scripts/migrate-deploy.mjs",
     "db:seed": "tsx prisma/seed.ts",
     "ledger:reconcile": "tsx server/src/scripts/reconcile.tsx",
     "test": "vitest run --project web --project server",

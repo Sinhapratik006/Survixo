@@ -14,9 +14,11 @@ ENV NODE_ENV=production
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/scripts ./scripts
 COPY --from=build /app/out ./dist
 COPY --from=build /app/server/dist ./server/dist
 USER node
 EXPOSE 8787
 # Apply pending migrations, then start the API (which also serves the built SPA).
-CMD ["sh", "-c", "npx prisma migrate deploy && node server/dist/index.js"]
+# DIRECT_URL falls back to DATABASE_URL for environments without a separate pooler URL.
+CMD ["sh", "-c", "DIRECT_URL=\"${DIRECT_URL:-$DATABASE_URL}\" node scripts/migrate-deploy.mjs && node server/dist/index.js"]

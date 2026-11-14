@@ -8,8 +8,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Use a direct (non-pooled, session-level) connection for migrations to avoid
+  // advisory-lock timeouts on poolers (e.g. PgBouncer/transaction mode). If you
+  // don't use a pooler, set DIRECT_URL to the same value as DATABASE_URL.
+  directUrl = env("DIRECT_URL")
 }
 
 // ─────────────────────────────── Identity ───────────────────────────────
