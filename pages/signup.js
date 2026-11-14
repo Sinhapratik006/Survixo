@@ -18,7 +18,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await api.post('/api/auth/signup', { email, password, name });
-      window.location.href = '/app/keys';
+      window.location.href = '/marketplace';
     } catch (err) {
       setError(err.message || 'Unable to create account.');
     } finally {

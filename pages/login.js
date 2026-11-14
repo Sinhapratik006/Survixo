@@ -24,7 +24,7 @@ export default function LoginPage() {
       const next = router.query.next;
       const safeNext =
         typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') && !next.startsWith('/\\');
-      window.location.href = safeNext ? next : '/app/keys';
+      window.location.href = safeNext ? next : '/marketplace';
     } catch (err) {
       setError(err.message || 'Incorrect email or password.');
     } finally {
