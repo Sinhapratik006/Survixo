@@ -56,7 +56,12 @@ const schema = z
     PRIVATE_ENDPOINT_ALLOWLIST: csv,
     ADMIN_EMAILS: csv,
 
-    AUTH_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).max(10_000).default(10),
+    // Per-IP request cap on sign-in/sign-up endpoints (all attempts, success or not).
+    AUTH_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).max(10_000).default(20),
+    // Brute-force lockout: only FAILED password logins count; success resets the email bucket.
+    AUTH_LOGIN_MAX_FAILURES_PER_EMAIL: z.coerce.number().int().min(1).max(10_000).default(10),
+    AUTH_LOGIN_MAX_FAILURES_PER_IP: z.coerce.number().int().min(1).max(100_000).default(50),
+    AUTH_LOGIN_LOCKOUT_SECONDS: z.coerce.number().int().min(10).max(86_400).default(900),
     RUN_WORKERS: bool(true),
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 

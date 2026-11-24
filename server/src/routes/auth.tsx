@@ -12,6 +12,7 @@ import { createUserWithWorkspace, normalizeEmail } from '../services/users.js';
 import { OAUTH_COOKIE, beginGoogleFlow, decodeState, getGoogleGateway, resolveGoogleUser } from '../services/google.js';
 import { audit } from '../services/audit.js';
 import { safeEqual } from '../security/crypto.js';
+import { loginThrottle, recordLoginFailure, recordLoginSuccess } from '../security/loginThrottle.js';
 import { logger } from '../lib/logger.js';
 
 export const authRouter = Router();
@@ -24,13 +25,17 @@ const signupSchema = z.object({
 });
 const loginSchema = z.object({ email: z.string().trim().email().max(254), password: z.string().min(1).max(128) });
 
+// Per-IP request caps. Password sign-in/sign-up and the Google OAuth redirects
+// use separate buckets so a round-trip through Google (start + callback = 2
+// requests) never eats into the password-login budget, and vice versa.
 const authLimiter = rateLimit({ name: 'auth', windowSeconds: 60, max: env.AUTH_RATE_LIMIT_PER_MINUTE, key: ipKey });
-const loginEmailLimiter = rateLimit({
-  name: 'login-email',
-  windowSeconds: 900,
-  max: Math.max(8, Math.ceil(env.AUTH_RATE_LIMIT_PER_MINUTE * 0.8)),
-  key: (req) => (typeof req.body?.email === 'string' ? normalizeEmail(req.body.email) : null),
-});
+const authHourlyLimiter = rateLimit({ name: 'auth-hour', windowSeconds: 3600, max: env.AUTH_RATE_LIMIT_PER_MINUTE * 10, key: ipKey });
+const oauthLimiter = rateLimit({ name: 'oauth', windowSeconds: 60, max: Math.max(20, env.AUTH_RATE_LIMIT_PER_MINUTE * 2), key: ipKey });
+
+// Brute-force lockout: counts failed logins only, per email and per IP.
+const loginEmail = (req: { body?: { email?: unknown } }) =>
+  typeof req.body?.email === 'string' && req.body.email.trim() ? normalizeEmail(req.body.email) : null;
+const loginGuard = loginThrottle(loginEmail);
 
 authRouter.get('/providers', (_req, res) => {
   res.json({ password: true, google: env.googleEnabled });
@@ -59,7 +64,7 @@ authRouter.get('/me', async (req, res) => {
   });
 });
 
-authRouter.post('/signup', authLimiter, async (req, res) => {
+authRouter.post('/signup', authLimiter, authHourlyLimiter, async (req, res) => {
   const body = parse(signupSchema, req.body);
   const email = normalizeEmail(body.email);
   if (await prisma.user.findUnique({ where: { email }, select: { id: true } }))
@@ -70,12 +75,17 @@ authRouter.post('/signup', authLimiter, async (req, res) => {
   res.status(201).json({ ok: true });
 });
 
-authRouter.post('/login', authLimiter, loginEmailLimiter, async (req, res) => {
+authRouter.post('/login', authLimiter, authHourlyLimiter, loginGuard, async (req, res) => {
   const body = parse(loginSchema, req.body);
-  const user = await prisma.user.findUnique({ where: { email: normalizeEmail(body.email) } });
+  const email = normalizeEmail(body.email);
+  const user = await prisma.user.findUnique({ where: { email } });
   // Always run a hash comparison to keep timing similar for unknown accounts.
   const ok = user?.passwordHash ? await verifyPassword(body.password, user.passwordHash) : (await verifyPassword(body.password, await getDummyHash()), false);
-  if (!user || !ok || user.deletedAt) throw unauthorized('Incorrect email or password.', 'invalid_credentials');
+  if (!user || !ok || user.deletedAt) {
+    await recordLoginFailure(req, email);
+    throw unauthorized('Incorrect email or password.', 'invalid_credentials');
+  }
+  await recordLoginSuccess(email);
   await createSession(res, req, user.id);
   await audit({ actorUserId: user.id, action: 'auth.login.password', ip: clientIp(req) });
   res.json({ ok: true });
@@ -89,7 +99,7 @@ authRouter.post('/logout', async (req, res) => {
 
 // ───────────── Google OAuth 2.0 / OpenID Connect (authorization code + PKCE) ─────────────
 
-authRouter.get('/google/start', authLimiter, (req, res) => {
+authRouter.get('/google/start', oauthLimiter, (req, res) => {
   if (!env.googleEnabled) return res.redirect(303, `${env.APP_URL}/login?error=google_not_configured`);
   const mode = req.query.mode === 'link' && req.auth ? 'link' : 'login';
   const flow = beginGoogleFlow(req.query.redirect, mode);
@@ -103,7 +113,7 @@ authRouter.get('/google/start', authLimiter, (req, res) => {
   res.redirect(302, flow.url);
 });
 
-authRouter.get('/google/callback', authLimiter, async (req, res) => {
+authRouter.get('/google/callback', oauthLimiter, async (req, res) => {
   const fail = (code: string) => {
     res.clearCookie(OAUTH_COOKIE, { path: '/api/auth/google' });
     res.redirect(303, `${env.APP_URL}/login?error=${encodeURIComponent(code)}`);

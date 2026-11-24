@@ -44,6 +44,19 @@ describe('email/password authentication', () => {
     expect(raw).toMatch(/SameSite=Lax/i);
   });
 
+  it('does not count successful logins toward the lockout, and locks out after repeated failures', async () => {
+    await signUp('lockout@example.com');
+    const login = (password: string, ip: string) =>
+      request(getApp()).post('/api/auth/login').set('origin', ORIGIN).set('x-forwarded-for', ip).send({ email: 'lockout@example.com', password });
+    // Many successful logins never trip the brute-force guard.
+    for (let i = 0; i < 15; i++) expect((await login('correct-horse-battery', '203.0.113.50')).status).toBe(200);
+    // 10 failures (default per-email cap), spread across IPs, then the account is locked.
+    for (let i = 0; i < 10; i++) expect((await login('wrong-password!', `198.51.100.${i + 1}`)).status).toBe(401);
+    const locked = await login('correct-horse-battery', '198.51.100.99');
+    expect(locked.status).toBe(429);
+    expect(locked.headers['retry-after']).toBeTruthy();
+  }, 60_000);
+
   it('does not store session tokens in plaintext', async () => {
     const ok = await request(getApp()).post('/api/auth/login').set('origin', ORIGIN).send({ email: 'alice@example.com', password: 'correct-horse-battery' });
     const token = cookieValue(ok, 'nx_session')!;
