@@ -80,17 +80,19 @@ export default function AdminMessages() {
     }
   }, []);
 
-  const loadMessages = useCallback(async (conversationId) => {
-    setLoading(true);
+  const loadMessages = useCallback(async (conversationId, { silent = false } = {}) => {
+    if (!silent) setLoading(true);
     try {
       const res = await api.get(`/api/admin/messages/conversations/${conversationId}/messages`);
       const data = res.data || {};
       setMessages(data.messages || []);
-      if (data.conversation) setActiveConversation(data.conversation);
+      if (data.conversation) {
+        setActiveConversation((prev) => (prev && prev.id !== data.conversation.id ? prev : data.conversation));
+      }
     } catch (e) {
-      setError(e.message || 'Failed to load messages');
+      if (!silent) setError(e.message || 'Failed to load messages');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -100,6 +102,16 @@ export default function AdminMessages() {
       loadConversations();
     }
   }, [checkingAuth, isAdmin, loadUsers, loadConversations]);
+
+  // Poll the open conversation so replies appear without a reload.
+  const activeId = activeConversation?.id;
+  useEffect(() => {
+    if (tab !== 'conversation' || !activeId) return undefined;
+    const timer = setInterval(() => {
+      if (!document.hidden) loadMessages(activeId, { silent: true });
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [tab, activeId, loadMessages]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();

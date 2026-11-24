@@ -11,6 +11,7 @@ export default function Messages() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [userRole, setUserRole] = useState('');
   const [userEmail, setUserEmail] = useState('');
+  const [myId, setMyId] = useState(null);
 
   const [tab, setTab] = useState('inbox'); // 'inbox' | 'conversation'
   const [conversations, setConversations] = useState([]);
@@ -32,6 +33,7 @@ export default function Messages() {
         if (res.data && res.data.user) {
           setUserRole(res.data.user.role);
           setUserEmail(res.data.user.email);
+          setMyId(res.data.user.id);
           setCheckingAuth(false);
         } else {
           window.location.href = '/login?next=/messages';
@@ -48,44 +50,66 @@ export default function Messages() {
     return () => { cancelled = true; };
   }, []);
 
-  const loadConversations = useCallback(async () => {
-    setLoading(true);
+  const loadConversations = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
     try {
       const res = await api.get('/api/messages/conversations');
       setConversations(res.data.data || []);
     } catch (e) {
-      setError(e.message || 'Failed to load conversations');
+      if (!silent) setError(e.message || 'Failed to load conversations');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
-  const loadMessages = useCallback(async (conversationId) => {
-    setLoading(true);
+  const loadMessages = useCallback(async (conversationId, { silent = false } = {}) => {
+    if (!silent) setLoading(true);
     try {
       const res = await api.get(`/api/messages/conversations/${conversationId}/messages`);
       setMessages(res.data.messages || []);
-      setActiveConversation(res.data.conversation);
+      const conv = res.data.conversation;
+      if (conv) {
+        // The messages endpoint returns `participants`, while the header and
+        // bubbles rely on `otherUser` from the inbox list, so keep it.
+        setActiveConversation((prev) => {
+          if (!prev || prev.id !== conv.id) return prev;
+          const others = (conv.participants || []).filter((p) => p.id !== myId);
+          const otherUser =
+            prev.otherUser || others.find((p) => p.role === 'ADMIN') || others[0] || null;
+          return { ...prev, ...conv, otherUser };
+        });
+      }
     } catch (e) {
-      setError(e.message || 'Failed to load messages');
+      if (!silent) setError(e.message || 'Failed to load messages');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  }, []);
+  }, [myId]);
 
   useEffect(() => {
     if (!checkingAuth) loadConversations();
   }, [checkingAuth, loadConversations]);
 
+  // Poll so new messages from the other side appear without a reload.
+  const activeId = activeConversation?.id;
+  useEffect(() => {
+    if (checkingAuth) return undefined;
+    const timer = setInterval(() => {
+      if (document.hidden) return;
+      if (tab === 'conversation' && activeId) loadMessages(activeId, { silent: true });
+      else if (tab === 'inbox') loadConversations({ silent: true });
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [checkingAuth, tab, activeId, loadMessages, loadConversations]);
+
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = messagesEndRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   };
 
   useEffect(() => {
-    if (tab === 'conversation' && activeConversation) {
-      scrollToBottom();
-    }
-  }, [tab, activeConversation, messages]);
+    if (tab === 'conversation') scrollToBottom();
+  }, [tab, messages.length]);
 
   const handleStartConversation = async (e) => {
     e.preventDefault();
@@ -132,15 +156,18 @@ export default function Messages() {
 
   const openConversation = (conv) => {
     setActiveConversation(conv);
+    setMessages([]);
     setTab('conversation');
     setError(null);
     setSuccess(null);
+    loadMessages(conv.id);
   };
 
   const goBack = () => {
     setTab('inbox');
     setActiveConversation(null);
     setMessages([]);
+    loadConversations({ silent: true });
   };
 
   if (checkingAuth) {
@@ -297,7 +324,7 @@ export default function Messages() {
                   key={msg.id}
                   className={`
                     flex ${
-                      msg.senderId === activeConversation.otherUser?.id
+                      msg.senderId !== myId
                         ? 'justify-start'
                         : 'justify-end'
                     } mb-2
@@ -307,7 +334,7 @@ export default function Messages() {
                     className={`
                       max-w-[80%] rounded-xl px-4 py-2.5 text-sm break-words shadow-sm
                       ${
-                        msg.senderId === activeConversation.otherUser?.id
+                        msg.senderId !== myId
                           ? 'bg-slate-200 dark:bg-navy-700 text-slate-900 dark:text-white rounded-tl-md rounded-tr-md rounded-br-md'
                           : 'bg-brand-600 text-white rounded-tl-md rounded-tr-md rounded-bl-md'
                       }
@@ -315,12 +342,12 @@ export default function Messages() {
                   >
                     <p>{msg.body}</p>
                     <p className={`text-[10px] mt-1 opacity-70 ${
-                      msg.senderId === activeConversation.otherUser?.id
+                      msg.senderId !== myId
                         ? 'text-slate-500 dark:text-slate-400'
                         : 'text-white/80'
                     }`}>
                       {new Date(msg.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                      {msg.senderId === activeConversation.otherUser?.id && msg.readAt && <span className="ml-1">✓</span>}
+                      {msg.senderId !== myId && msg.readAt && <span className="ml-1">✓</span>}
                     </p>
                   </div>
                 </div>
