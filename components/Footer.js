@@ -1,131 +1,86 @@
 import Link from 'next/link';
-import { Mail, ArrowRight } from 'lucide-react';
+import Logo from './Logo';
 
-const productLinks = [
-  { name: 'Models', href: '/models' },
-  { name: 'Calculator', href: '/calculator' },
-  { name: 'Pricing', href: '#' },
-  { name: 'Docs', href: '/docs' },
-];
-
-const companyLinks = [
-  { name: 'About', href: '#' },
-  { name: 'Blog', href: '#' },
-  { name: 'Contact', href: '#' },
-  { name: 'Status', href: '#' },
-];
-
-const legalLinks = [
-  { name: 'Terms', href: '/legal' },
-  { name: 'Privacy', href: '#' },
-  { name: 'Cookie Policy', href: '#' },
+const columns = [
+  {
+    title: 'Product',
+    links: [
+      { name: 'Marketplace', href: '/marketplace' },
+      { name: 'Models', href: '/models' },
+      { name: 'Calculator', href: '/calculator' },
+      { name: 'Analytics', href: '/analytics' },
+    ],
+  },
+  {
+    title: 'Build',
+    links: [
+      { name: 'API docs', href: '/docs' },
+      { name: 'API keys', href: '/app/keys' },
+      { name: 'Usage', href: '/app/usage' },
+    ],
+  },
+  {
+    title: 'Sell',
+    links: [
+      { name: 'Seller dashboard', href: '/seller/dashboard' },
+      { name: 'Create listing', href: '/seller/create' },
+      { name: 'Payouts', href: '/seller/payouts' },
+    ],
+  },
+  {
+    title: 'Company',
+    links: [
+      { name: 'Contact', href: '/messages' },
+      { name: 'Status', href: '#' },
+      { name: 'Blog', href: '#' },
+    ],
+  },
+  {
+    title: 'Legal',
+    links: [
+      { name: 'Terms', href: '/legal' },
+      { name: 'Privacy', href: '/legal' },
+    ],
+  },
 ];
 
 export default function Footer() {
   return (
-    <footer className="border-t border-slate-200/50 dark:border-navy-800/30 bg-white dark:bg-navy-950">
-      <div className="container-page py-12 md:py-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-12">
-          <div className="col-span-2 lg:col-span-1">
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-8 h-8 rounded-2xl bg-gradient-to-br from-brand-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-brand-500/30 relative overflow-hidden">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-full h-full" fill="none" stroke="#FFFFFF" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 20 L12 4 L18 20"/>
-                  <path d="M9 14 L15 14"/>
-                  <path d="M20 4 L20 20"/>
-                  <path d="M18 6 L22 6"/>
-                </svg>
-                <div className="absolute inset-0 bg-white/10" />
-              </div>
-              <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">ApiTradeX</span>
-            </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs">
-              The unified OpenAI-compatible API for AI inference with intelligent routing,
-              budget guards, and a full seller ecosystem.
+    <footer className="mt-[90px] border-t border-line">
+      <div className="container-page">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-6 pt-[50px] pb-10">
+          <div className="col-span-2 md:col-span-1">
+            <Logo className="text-[15px]" size={14} />
+            <p className="mt-4 font-mono text-[12.5px] leading-relaxed text-ink-muted max-w-[220px]">
+              One OpenAI-compatible API. Every model. Routed for cost.
             </p>
-            <div className="flex items-center gap-4 mt-6">
-              <a
-                href="mailto:hello@apitradex.local"
-                className="w-8 h-8 rounded-xl border border-slate-200 dark:border-navy-800 bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-400 flex items-center justify-center hover:bg-brand-600 hover:text-white hover:border-brand-600 transition-all duration-200"
-                aria-label="Email"
-              >
-                <Mail className="w-4 h-4" />
-              </a>
-              <a href="#" className="text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
-                Twitter
-              </a>
-              <a href="#" className="text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
-                GitHub
-              </a>
-              <a href="#" className="text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
-                Discord
-              </a>
+            <p className="mt-4 font-mono text-[12px] text-ink-2">hello@apitradex.local</p>
+          </div>
+          {columns.map((col) => (
+            <div key={col.title}>
+              <b className="block mb-3 font-mono text-xs font-normal uppercase tracking-[0.08em] text-ink">
+                {col.title}
+              </b>
+              {col.links.map((l) => (
+                <Link
+                  key={l.name}
+                  href={l.href}
+                  className="block py-[3px] text-[13.5px] text-ink-muted hover:text-ink transition-colors"
+                >
+                  {l.name}
+                </Link>
+              ))}
             </div>
-          </div>
-          <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-navy-300 mb-6">
-              Product
-            </h4>
-            <ul className="space-y-3">
-              {productLinks.map((l) => (
-                <li key={l.name}>
-                  <Link
-                    href={l.href}
-                    className="text-sm text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
-                  >
-                    {l.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-navy-300 mb-6">
-              Company
-            </h4>
-            <ul className="space-y-3">
-              {companyLinks.map((l) => (
-                <li key={l.name}>
-                  <a
-                    href={l.href}
-                    className="text-sm text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
-                  >
-                    {l.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-navy-300 mb-6">
-              Legal
-            </h4>
-            <ul className="space-y-3">
-              {legalLinks.map((l) => (
-                <li key={l.name}>
-                  <Link
-                    href={l.href}
-                    className="text-sm text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
-                  >
-                    {l.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          ))}
         </div>
-        <div className="border-t border-slate-100 dark:border-navy-800/30 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-slate-400 dark:text-slate-500">
-            &copy; {new Date().getFullYear()} ApiTradeX. All rights reserved.
-          </p>
-          <div className="flex items-center gap-6 text-xs text-slate-400 dark:text-slate-500">
-            <span className="flex items-center gap-1">
-              <ArrowRight className="w-3 h-3" /> SOC 2 Type II
-            </span>
-            <span className="flex items-center gap-1">
-              <ArrowRight className="w-3 h-3" /> GDPR compliant
-            </span>
-          </div>
+
+        <div className="flex flex-wrap justify-between gap-3 pb-[26px] font-mono text-xs text-ink-faint">
+          <span>&copy; {new Date().getFullYear()} ApiTradeX. All rights reserved.</span>
+          <span>SOC 2 Type II · GDPR</span>
+        </div>
+
+        <div className="giant pb-[30px] select-none" aria-hidden="true">
+          APITRADEX
         </div>
       </div>
     </footer>

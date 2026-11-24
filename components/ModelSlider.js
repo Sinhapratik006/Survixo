@@ -41,6 +41,7 @@ export default function ModelSlider({
   showDots = true,
   title = 'All AI models',
   subtitle,
+  eyebrow,
 }) {
   const containerRef = useRef(null);
   const trackRef = useRef(null);
@@ -102,7 +103,8 @@ export default function ModelSlider({
     return (
       <section className="py-10 md:py-16">
         <div className="container-page">
-          <h2 className="text-h1 text-slate-900 dark:text-white mb-2">{title}</h2>
+          {eyebrow && <div className="num">{eyebrow}</div>}
+          <h2 className="h-section mt-3.5 mb-3">{title}</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">
             {subtitle ?? 'No models available right now.'}
           </p>
@@ -119,12 +121,13 @@ export default function ModelSlider({
   }
 
   return (
-    <section className="py-10 md:py-16 bg-canvas dark:bg-navy-950">
+    <section className="py-10 md:py-16">
       <div className="container-page">
         <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h2 className="text-h1 text-slate-900 dark:text-white">{title}</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            {eyebrow && <div className="num">{eyebrow}</div>}
+            <h2 className="h-section mt-3.5">{title}</h2>
+            <p className="mt-3 font-mono text-[14.5px] leading-[1.7] text-ink-muted">
               {subtitle ?? `${models.length} model${models.length !== 1 ? 's' : ''} available`}
             </p>
           </div>
@@ -280,20 +283,20 @@ export default function ModelSlider({
           )}
 
           {showDots && pageCount > 1 && (
-            <div className="mx-auto flex -mt-6 gap-2 justify-center">
+            <div className="mx-auto flex mt-6 gap-2 justify-center">
               {Array.from({ length: pageCount }).map((_, p) => (
                 <motion.button
                   key={p}
                   whileHover={{ scale: 1.3 }}
                   animate={{
                     scale: activePage === p ? 1.2 : 1,
-                    backgroundColor: activePage === p ? '#2970FF' : 'transparent',
+                    backgroundColor: activePage === p ? '#F26A2E' : 'transparent',
                   }}
                   transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                   onClick={() => scrollToPage(p)}
                   aria-label={`Go to page ${p + 1}`}
                   aria-current={activePage === p ? 'true' : undefined}
-                  className="w-2 h-2 rounded-full border border-slate-300 dark:border-navy-600/50 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
+                  className="w-2 h-2 border border-slate-300 dark:border-navy-600/50 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
                 />
               ))}
             </div>

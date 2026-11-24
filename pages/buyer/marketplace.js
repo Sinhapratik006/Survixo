@@ -27,6 +27,10 @@ export default function BuyerMarketplacePage() {
   const [copiedId, setCopiedId] = useState(null);
   const [buyBusy, setBuyBusy] = useState(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  // USDC/USDT payment modal state
+  const [paymentModal, setPaymentModal] = useState(null); // { orderId, walletAddress, token, network, amountUsd, expiresAt }
+  const [txHash, setTxHash] = useState('');
+  const [confirmBusy, setConfirmBusy] = useState(null);
 
   // Require a session — signed-out visitors go to /login and come back here,
   // instead of seeing an empty marketplace.
@@ -97,16 +101,46 @@ export default function BuyerMarketplacePage() {
         typeof crypto !== 'undefined' && crypto.randomUUID
           ? crypto.randomUUID()
           : 'idem-' + Date.now() + '-' + Math.random().toString(36).slice(2);
-      const res = await api.post('/api/marketplace/checkout', { listingId, idempotencyKey });
-      const url = res.data?.checkoutUrl;
-      if (url) {
-        window.location.href = url;
-      } else {
-        throw new Error('No checkout URL returned');
-      }
+      const res = await api.post('/api/marketplace/payment', {
+        listingId,
+        idempotencyKey,
+        token: 'USDC',
+      });
+      const data = res.data;
+      setPaymentModal({
+        orderId: data.orderId,
+        paymentReference: data.paymentReference,
+        walletAddress: data.walletAddress,
+        token: data.token,
+        network: data.network,
+        amountUsd: data.amountUsd,
+        expiresAt: data.expiresAt,
+      });
+      setTxHash('');
     } catch (err) {
-      alert(err.message || 'Could not start checkout');
+      alert(err.message || 'Could not start payment');
       setBuyBusy(null);
+    }
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!paymentModal || !txHash) return;
+    setConfirmBusy(paymentModal.orderId);
+    try {
+      await api.post('/api/marketplace/payment/confirm', {
+        orderId: paymentModal.orderId,
+        txHash,
+      });
+      setPaymentModal(null);
+      setTxHash('');
+      setBuyBusy(null);
+      setConfirmBusy(null);
+      // Refresh orders so the new PAID order shows up
+      const res = await api.get('/api/marketplace/orders');
+      setOrders(res.data.data || []);
+    } catch (err) {
+      alert(err.message || 'Could not confirm payment');
+      setConfirmBusy(null);
     }
   };
 
@@ -359,6 +393,82 @@ export default function BuyerMarketplacePage() {
           </div>
         </div>
       </div>
+
+      {paymentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setPaymentModal(null)} />
+          <div className="relative bg-white dark:bg-navy-800 rounded-xl p-6 md:p-8 w-full max-w-md mx-4 shadow-xl">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-white">
+                {paymentModal.token === 'USDC' ? '🟢' : '🟡'}
+              </div>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Send {paymentModal.token}</h2>
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+              Send exactly <strong>${paymentModal.amountUsd.toFixed(2)}</strong> to the address below on {paymentModal.network}.
+            </p>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Wallet Address</label>
+                <div className="flex gap-2">
+                  <code className="flex-1 break-all text-sm font-mono text-slate-900 dark:text-white bg-slate-50 dark:bg-navy-700/50 px-3 py-2 rounded border border-slate-200 dark:border-navy-700">
+                    {paymentModal.walletAddress}
+                  </code>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(paymentModal.walletAddress).then(() => setCopiedId('addr'))}
+                    className="p-2 text-slate-400 hover:text-brand-500 dark:hover:text-brand-400"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Network</label>
+                <span className="text-sm text-slate-700 dark:text-slate-300">{paymentModal.network}</span>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Amount</label>
+                <span className="text-sm font-semibold text-slate-900 dark:text-white">${paymentModal.amountUsd.toFixed(2)} {paymentModal.token}</span>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Transaction Hash</label>
+                <input
+                  type="text"
+                  value={txHash}
+                  onChange={(e) => setTxHash(e.target.value.trim())}
+                  placeholder="Paste the on-chain tx hash after sending"
+                  className="w-full rounded border-slate-300 dark:border-navy-600 px-3 py-2 focus:outline-none focus:border-brand-500 dark:bg-navy-700 text-sm"
+                />
+              </div>
+              <div className="text-xs text-amber-600 dark:text-amber-400">
+                ⏱ Payment window expires at{' '}
+                <span className="font-medium">{new Date(paymentModal.expiresAt).toLocaleTimeString()}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setPaymentModal(null)}
+                className="flex-1 px-4 py-2 rounded border border-slate-300 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700/50 text-sm transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmPayment}
+                disabled={!txHash || confirmBusy === paymentModal.orderId}
+                className="flex-1 px-4 py-2 rounded bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {confirmBusy === paymentModal.orderId ? 'Confirming…' : 'Confirm Payment'}
+              </button>
+            </div>
+
+            <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
+              After the transaction is confirmed on-chain, your API key will be delivered to your purchases.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

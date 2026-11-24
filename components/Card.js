@@ -4,11 +4,8 @@ export default function Card({ children, className = '', hover = false, padded =
   return (
     <div
       className={cn(
-        'rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800/50 backdrop-blur-sm',
-        'transition-all duration-300 outline-none',
-        hover
-          ? 'hover:border-brand-300/60 dark:hover:border-brand-500/30 hover:shadow-cardHover hover:-translate-y-1'
-          : '',
+        'border border-line-2 bg-[#0a0a0a] transition-colors duration-150 outline-none',
+        hover ? 'hover:border-ink-faint hover:bg-navy-900' : '',
         padded ? 'p-6' : 'p-0',
         className,
       )}

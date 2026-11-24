@@ -1,5 +1,44 @@
 import type { Config } from 'tailwindcss';
 
+/*
+ * Design system: dark, hairline-bordered, square-cornered, mono-labelled.
+ * The site is dark-only (see pages/_document.js). Existing class names are
+ * kept and remapped here so every page picks up the new look:
+ *   brand  → orange accent (#f26a2e)
+ *   navy   → near-black panels and hairlines
+ *   slate  → warm neutral grays
+ *   indigo/purple/violet/blue → accent, so old gradients stay on-palette
+ *   rounded-* → square (rounded-full kept for dots, spinners, avatars)
+ */
+
+const accent = {
+  50: '#FEF3EC',
+  100: '#FDE3D3',
+  200: '#FBC4A5',
+  300: '#F8A06F',
+  400: '#F5844A',
+  500: '#F26A2E',
+  600: '#E1561A',
+  700: '#BB4214',
+  800: '#953617',
+  900: '#782F16',
+  950: '#411509',
+};
+
+const neutral = {
+  50: '#F5F5F4',
+  100: '#E7E7E4',
+  200: '#C9C9C6',
+  300: '#B0B0AC',
+  400: '#8B8B87',
+  500: '#6F6F6B',
+  600: '#5C5C59',
+  700: '#333333',
+  800: '#232323',
+  900: '#121212',
+  950: '#0A0A0A',
+};
+
 export default {
   content: [
     './components/**/*.{js,jsx,ts,tsx}',
@@ -10,43 +49,72 @@ export default {
   ],
   darkMode: 'class',
   theme: {
+    borderRadius: {
+      none: '0',
+      sm: '0',
+      DEFAULT: '0',
+      md: '0',
+      lg: '0',
+      xl: '0',
+      '2xl': '0',
+      '3xl': '0',
+      full: '9999px',
+    },
     extend: {
       colors: {
-        brand: {
-          50: '#EFF4FF',
-          100: '#D1E0FF',
-          200: '#B2CCFF',
-          300: '#84ADFF',
-          400: '#528BFF',
-          500: '#2970FF',
-          600: '#155EEF',
-          700: '#004EEB',
-          800: '#0040C1',
-          900: '#00359E',
-          950: '#002266',
-        },
-        secondary: '#3B82F6',
+        brand: accent,
+        accent: accent[500],
+        secondary: accent[500],
+        indigo: accent,
+        purple: accent,
+        violet: accent,
+        fuchsia: accent,
+        blue: accent,
+        cyan: accent,
+        slate: neutral,
+        gray: neutral,
         navy: {
-          DEFAULT: '#0B1220',
-          950: '#070C17',
-          900: '#0B1220',
-          800: '#111A2E',
-          700: '#18233B',
-          600: '#22304D',
-          500: '#33415F',
+          DEFAULT: '#070707',
+          950: '#070707',
+          900: '#0D0D0D',
+          800: '#121212',
+          700: '#232323',
+          600: '#333333',
+          500: '#5C5C59',
+          400: '#6F6F6B',
+          300: '#8B8B87',
         },
-        canvas: '#F5F8FF',
+        canvas: '#070707',
+        line: { DEFAULT: '#232323', 2: '#333333' },
+        ink: {
+          DEFAULT: '#F5F5F4',
+          2: '#C9C9C6',
+          muted: '#8B8B87',
+          faint: '#5C5C59',
+        },
+        ok: '#4ADE80',
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
-        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
+        sans: ['Geist', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
       },
       boxShadow: {
-        card: '0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(21, 94, 239, 0.06)',
-        lift: '0 8px 24px -8px rgba(21, 94, 239, 0.18)',
+        sm: 'none',
+        DEFAULT: 'none',
+        md: 'none',
+        lg: '0 20px 60px #000',
+        xl: '0 30px 90px #000',
+        '2xl': '0 40px 120px #000',
+        card: 'none',
+        lift: '0 40px 120px #000',
+        cardHover: 'none',
       },
-      borderRadius: {
-        xl: '0.75rem',
+      fontSize: {
+        h1: ['2.5rem', { lineHeight: '1.02', letterSpacing: '-0.04em', fontWeight: '700' }],
+        h2: ['1.75rem', { lineHeight: '1.1', letterSpacing: '-0.03em', fontWeight: '700' }],
+      },
+      maxWidth: {
+        page: '1320px',
       },
     },
   },

@@ -2,32 +2,28 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Button from './Button';
-import { Menu, X, Sun, Moon, Globe, DollarSign, BarChart3, Key, ShieldCheck, LogOut, User, Mail } from 'lucide-react';
+import Logo from './Logo';
+import { Menu, X, LogOut } from 'lucide-react';
 import { api } from '../lib/api.js';
+import { cn } from './lib/cn.js';
 
 const navLinks = [
-  { name: 'Marketplace', href: '/marketplace', icon: Globe },
-  { name: 'Buyer', href: '/buyer/marketplace', icon: Key },
-  { name: 'Seller', href: '/seller/dashboard', icon: ShieldCheck },
-  { name: 'Calculator', href: '/calculator', icon: DollarSign },
-  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-  { name: 'Messages', href: '/messages', icon: Mail },
+  { name: 'Marketplace', href: '/marketplace' },
+  { name: 'Buyer', href: '/buyer/marketplace' },
+  { name: 'Seller', href: '/seller/dashboard' },
+  { name: 'Calculator', href: '/calculator' },
+  { name: 'Analytics', href: '/analytics' },
+  { name: 'Messages', href: '/messages' },
 ];
 
 export default function Navbar() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
-  const [dark, setDark] = useState(false);
   const [authed, setAuthed] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem('apitradex-theme');
-    if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-      setDark(true);
-    }
     (async () => {
       try {
         const res = await api.get('/api/auth/me');
@@ -37,7 +33,6 @@ export default function Navbar() {
         setAuthed(false);
       }
     })();
-    // Fetch unread message count
     (async () => {
       try {
         const res = await api.get('/api/messages/unread-count');
@@ -48,13 +43,6 @@ export default function Navbar() {
     })();
   }, []);
 
-  const toggleTheme = () => {
-    const next = !dark;
-    document.documentElement.classList.toggle('dark', next);
-    localStorage.setItem('apitradex-theme', next ? 'dark' : 'light');
-    setDark(next);
-  };
-
   const handleLogout = async () => {
     try {
       await api.post('/api/auth/logout');
@@ -63,156 +51,115 @@ export default function Navbar() {
     window.location.href = '/';
   };
 
+  const links = [
+    ...navLinks,
+    ...(authed === true ? [{ name: 'Profile', href: '/profile' }] : []),
+    ...(authed === true && isAdmin ? [{ name: 'Admin', href: '/admin/messages' }] : []),
+  ];
+
+  const isActive = (href) => router.pathname === href || router.pathname.startsWith(`${href}/`);
+
+  const unreadBadge = (name) =>
+    name === 'Messages' && unreadCount > 0 ? (
+      <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-brand-500 text-[10px] text-[#0a0a0a] font-bold">
+        {unreadCount > 9 ? '9+' : unreadCount}
+      </span>
+    ) : null;
+
   return (
-    <nav className="sticky top-0 z-50 border-b border-slate-200/60 dark:border-navy-700/30 bg-white/80 dark:bg-navy-950/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-line bg-[#070707]/90 backdrop-blur-md">
       <div className="container-page">
-        <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-brand-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-brand-500/30 relative overflow-hidden">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-full h-full" fill="none" stroke="#FFFFFF" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 20 L12 4 L18 20"/>
-                <path d="M9 14 L15 14"/>
-                <path d="M20 4 L20 20"/>
-                <path d="M18 6 L22 6"/>
-              </svg>
-              <div className="absolute inset-0 bg-white/10" />
-            </div>
-            <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">ApiTradeX</span>
-          </Link>
+        <nav className="flex items-center gap-10 h-[70px]">
+          <Logo />
 
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1.5"
-                >
-                  <Icon className="w-4 h-4" /> {link.name}
-                  {link.name === 'Messages' && unreadCount > 0 && (
-                    <span className="ml-1 px-1.5 py-0.5 rounded-full bg-rose-600 text-[10px] text-white font-bold">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-            {authed === true && (
-              <>
-                <Link
-                  href="/profile"
-                  className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1.5"
-                >
-                  <User className="w-4 h-4" /> Profile
-                </Link>
-                {isAdmin && (
-                  <Link
-                    href="/admin/messages"
-                    className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors flex items-center gap-1.5"
-                  >
-                    <ShieldCheck className="w-4 h-4" /> Admin Messages
-                  </Link>
-                )}
-              </>
-            )}
-            <div className="flex items-center gap-3">
-              {authed === true && (
-                <Button variant="outline" size="sm" onClick={handleLogout}>
-                  <LogOut className="w-3.5 h-3.5 mr-2" /> Sign out
-                </Button>
-              )}
-              {authed === false && (
-                <>
-                  <Button variant="ghost" size="sm" onClick={() => { router.push('/login'); }}>
-                    Sign in
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => { router.push('/signup'); }}>
-                    Get API key
-                  </Button>
-                </>
-              )}
-              {authed === null && <div className="w-24 h-8" aria-hidden="true" />}
-              <button
-                onClick={toggleTheme}
-                className="w-8 h-8 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                aria-label="Toggle dark mode"
-              >
-                {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
-          <div className="md:hidden flex items-center gap-2">
-            <button
-              onClick={toggleTheme}
-              className="w-8 h-8 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-              aria-label="Toggle dark mode"
-            >
-              {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="w-8 h-8 rounded-lg border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-              aria-label="Open menu"
-            >
-              {isOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {isOpen && (
-        <div className="md:hidden border-t border-slate-200/50 dark:border-navy-800/30 bg-white dark:bg-navy-950 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="container-page py-6 space-y-4">
-            {navLinks.map((link) => (
+          <div className="hidden lg:flex items-center gap-7 ml-auto font-mono text-[13px] uppercase tracking-[0.06em]">
+            {links.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
-                onClick={() => setIsOpen(false)}
-                className="block text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 py-3 px-4 rounded-xl transition-colors flex items-center gap-1.5"
+                className={cn(
+                  'flex items-center transition-colors hover:text-ink',
+                  isActive(link.href) ? 'text-ink' : 'text-ink-2',
+                )}
               >
                 {link.name}
+                {unreadBadge(link.name)}
               </Link>
             ))}
-            <div className="pt-4 border-t border-slate-100 dark:border-navy-800/30">
-              <button
-                onClick={() => { setIsOpen(false); toggleTheme(); }}
-                className="flex items-center gap-2 w-full py-3 px-4 rounded-xl border border-slate-200 dark:border-navy-800 bg-white/50 dark:bg-navy-900/30 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800/50 transition-colors text-left"
-              >
-                {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                {dark ? 'Light mode' : 'Dark mode'}
-              </button>
-            </div>
-            <div className="pt-4 space-y-3">
-              {authed === true && (
+          </div>
+
+          <div className="hidden lg:flex items-center gap-3">
+            {authed === true && (
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="w-3.5 h-3.5" /> Sign out
+              </Button>
+            )}
+            {authed === false && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => router.push('/login')}>
+                  Sign in
+                </Button>
+                <Button size="sm" onClick={() => router.push('/signup')}>
+                  Start free
+                </Button>
+              </>
+            )}
+            {authed === null && <div className="w-40 h-[34px]" aria-hidden="true" />}
+          </div>
+
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="lg:hidden ml-auto w-[34px] h-[34px] flex items-center justify-center border border-line-2 text-ink-2 hover:border-ink-2 hover:text-ink transition-colors"
+            aria-label={isOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={isOpen}
+          >
+            {isOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </button>
+        </nav>
+      </div>
+
+      {isOpen && (
+        <div className="lg:hidden border-t border-line bg-[#070707]">
+          <div className="container-page py-4">
+            <div className="border border-line-2">
+              {links.map((link) => (
                 <Link
-                  href="/profile"
+                  key={link.name}
+                  href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className="block text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 py-3 px-4 rounded-xl transition-colors flex items-center gap-1.5"
+                  className={cn(
+                    'flex items-center justify-between px-4 py-3 border-b border-line last:border-b-0 font-mono text-[13px] uppercase tracking-[0.06em] hover:bg-navy-900 hover:text-ink transition-colors',
+                    isActive(link.href) ? 'text-ink' : 'text-ink-2',
+                  )}
                 >
-                  <User className="w-4 h-4" /> Profile
+                  <span className="flex items-center">
+                    {link.name}
+                    {unreadBadge(link.name)}
+                  </span>
+                  <span className="text-ink-faint">→</span>
                 </Link>
-              )}
+              ))}
+            </div>
+            <div className="pt-4 grid gap-3">
               {authed === true && (
                 <Button variant="outline" className="w-full" onClick={handleLogout}>
-                  <LogOut className="w-3.5 h-3.5 mr-2" /> Sign out
+                  <LogOut className="w-3.5 h-3.5" /> Sign out
                 </Button>
               )}
               {authed === false && (
-                <>
-                  <Button variant="ghost" className="w-full" onClick={() => { setIsOpen(false); router.push('/login'); }}>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button variant="outline" className="w-full" onClick={() => { setIsOpen(false); router.push('/login'); }}>
                     Sign in
                   </Button>
-                  <Button variant="outline" className="w-full" onClick={() => { setIsOpen(false); router.push('/signup'); }}>
-                    Get API key
+                  <Button className="w-full" onClick={() => { setIsOpen(false); router.push('/signup'); }}>
+                    Start free
                   </Button>
-                </>
+                </div>
               )}
             </div>
           </div>
         </div>
       )}
-    </nav>
+    </header>
   );
 }

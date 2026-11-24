@@ -2,34 +2,116 @@
 @tailwind components;
 @tailwind utilities;
 
-.container-page {
-  @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
-}
-
 :root {
-  --background: #fafafa;
-  --foreground: #111111;
+  --bg: #070707;
+  --panel: #0d0d0d;
+  --panel-2: #121212;
+  --line: #232323;
+  --line-2: #333333;
+  --text: #f5f5f4;
+  --text-2: #c9c9c6;
+  --muted: #8b8b87;
+  --faint: #5c5c59;
+  --acc: #f26a2e;
+  --green: #4ade80;
+  color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  background-color: var(--bg);
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: Inter, system-ui, Arial, sans-serif;
-  @apply antialiased;
+  color: var(--text);
+  font: 15px/1.55 Geist, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  background-image: radial-gradient(#ffffff0d 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+
+/* Page backgrounds were solid; let the dot grid show through. */
+.min-h-screen.bg-canvas,
+.dark .min-h-screen.dark\:bg-navy-950 {
+  background-color: transparent;
+}
+
+::selection {
+  background: var(--acc);
+  color: #0a0a0a;
+}
+
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto max-w-page px-4 md:px-9;
+  }
+
+  /* Uppercase mono micro-label: "01 / Pricing", table heads, field labels. */
+  .lbl {
+    @apply font-mono text-xs uppercase tracking-[0.08em] text-ink-muted;
+  }
+  .num {
+    @apply font-mono text-xs uppercase tracking-[0.1em] text-brand-500;
+  }
+
+  .h-display {
+    @apply font-bold tracking-[-0.045em] leading-none text-[42px] md:text-[62px];
+  }
+  .h-section {
+    @apply font-bold tracking-[-0.04em] leading-[1.02] text-[32px] md:text-[46px];
+  }
+  .lead {
+    @apply font-mono text-[13.5px] md:text-[15px] leading-[1.7] text-ink-2;
+  }
+
+  /* Bordered panel, no radius. */
+  .panel {
+    @apply border border-line-2 bg-[#0a0a0a];
+  }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2.5 h-[42px] px-[18px] font-mono text-[13px] uppercase tracking-[0.06em]
+      border border-line-2 bg-[#0b0b0b] text-ink transition-colors duration-150 hover:border-ink-2;
+  }
+  .btn-w {
+    @apply bg-ink text-[#0a0a0a] border-ink hover:bg-white hover:border-white;
+  }
+  .btn-sm {
+    @apply h-[34px] px-3.5 text-xs;
+  }
+}
+
+/* Hairline divider grid: children separated by 1px rules. */
+.rule-grid {
+  display: grid;
+  gap: 1px;
+  background: var(--line-2);
+  border: 1px solid var(--line-2);
+}
+.rule-grid > * {
+  background: var(--bg);
+}
+
+.giant {
+  font: 800 clamp(80px, 18vw, 260px) / 0.8 'Geist Mono', ui-monospace, monospace;
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 1px #2c2c2c;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #155EEF 0%, #004EEB 50%, #7C3AED 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--acc);
 }
 
 ::-webkit-scrollbar {
@@ -40,11 +122,7 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-}
-.dark ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #333;
 }
 
 .reveal {
@@ -61,20 +139,38 @@ body {
 }
 
 .glass {
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
-.dark .glass {
-  background: rgba(15, 23, 42, 0.4);
+  background: #0a0a0a;
 }
 
 @keyframes ping-longer {
-  75%, 100% {
+  75%,
+  100% {
     transform: scale(2);
     opacity: 0;
   }
 }
 .animate-ping-longer {
   animation: ping-longer 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+.live-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--green);
+  display: inline-block;
+  animation: blink 1.6s steps(2, start) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot,
+  .reveal {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }

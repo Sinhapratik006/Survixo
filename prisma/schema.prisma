@@ -129,6 +129,9 @@ model Organization {
   auditLogs        AuditLog[]
   arenaSessions    ArenaSession[]
   benchmarkRuns    BenchmarkResult[]
+  // Platform USDC/USDT receiving addresses for marketplace payments
+  usdcWalletAddress String?
+  usdtWalletAddress String?
 }
 
 model Membership {
@@ -672,8 +675,6 @@ model MarketplaceListing {
   models         String[]        @default([])
   status         ListingStatus @default(DRAFT)
   isSold         Boolean         @default(false)
-  dodoProductId  String?
-  dodoPriceId    String?
   maxBuyers      Int?            // null = unlimited
   buyerCount     Int             @default(0)
   createdAt      DateTime        @default(now())
@@ -693,12 +694,15 @@ model Order {
   amountCents       Int          // Amount paid in cents
   currency          String       @default("usd")
   status            OrderStatus  @default(PENDING)
-  dodoCheckoutId    String?
-  dodoPaymentId     String?
-  dodoCustomerId    String?
+  // USDC/USDT direct payment fields
+  paymentNetwork    String?      // e.g. "ETHEREUM", "SOLANA", "POLYGON", "ARBITRUM"
+  paymentToken      String?      // "USDC" or "USDT"
+  paymentTxHash     String?      // On-chain transaction hash
+  paymentConfirmed  Boolean      @default(false)
+  paymentConfirmedAt DateTime?
   apiKeyDelivered   String?      // Decrypted API key delivered to buyer after payment
   apiKeyDeliveredAt DateTime?
-  cryptoTxHash      String?
+  cryptoTxHash      String?      // Legacy: kept for backward compatibility
   platformFeeCents  Int          @default(0)
   sellerEarningCents Int         @default(0)
   createdAt         DateTime     @default(now())
@@ -710,7 +714,6 @@ model Order {
   @@index([buyerOrgId])
   @@index([listingId])
   @@index([status])
-  @@unique([dodoCheckoutId])
 }
 
 model CryptoPayoutAccount {

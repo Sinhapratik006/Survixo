@@ -83,11 +83,11 @@ export default function AnalyticsPage() {
               <div className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={volume}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-slate-200 dark:stroke-navy-700" />
-                    <XAxis dataKey="day" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-                    <YAxis tickFormatter={(v) => (v / 1e6).toFixed(0) + 'M'} tick={{ fontSize: 11 }} />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="success" stroke="#0ea5e9" strokeWidth={2} dot={false} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#232323" />
+                    <XAxis stroke="#333333" dataKey="day" tick={{ fontSize: 11, fill: '#8B8B87', fontFamily: '"Geist Mono", monospace' }} interval="preserveStartEnd" />
+                    <YAxis stroke="#333333" tickFormatter={(v) => (v / 1e6).toFixed(0) + 'M'} tick={{ fontSize: 11, fill: '#8B8B87', fontFamily: '"Geist Mono", monospace' }} />
+                    <Tooltip contentStyle={{ background: '#0a0a0a', border: '1px solid #333', borderRadius: 0, fontFamily: '"Geist Mono", monospace', fontSize: 12 }} labelStyle={{ color: '#8B8B87' }} itemStyle={{ color: '#F5F5F4' }} cursor={{ fill: '#ffffff08', stroke: '#333' }} />
+                    <Line type="monotone" dataKey="success" stroke="#F26A2E" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -101,11 +101,11 @@ export default function AnalyticsPage() {
               <div className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={savings}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-slate-200 dark:stroke-navy-700" />
-                    <XAxis dataKey="day" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-                    <YAxis tickFormatter={(v) => '$' + (v / 1e3).toFixed(0) + 'K'} tick={{ fontSize: 11 }} />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="realizedUsd" stroke="#0ea5e9" strokeWidth={2} dot={false} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#232323" />
+                    <XAxis stroke="#333333" dataKey="day" tick={{ fontSize: 11, fill: '#8B8B87', fontFamily: '"Geist Mono", monospace' }} interval="preserveStartEnd" />
+                    <YAxis stroke="#333333" tickFormatter={(v) => '$' + (v / 1e3).toFixed(0) + 'K'} tick={{ fontSize: 11, fill: '#8B8B87', fontFamily: '"Geist Mono", monospace' }} />
+                    <Tooltip contentStyle={{ background: '#0a0a0a', border: '1px solid #333', borderRadius: 0, fontFamily: '"Geist Mono", monospace', fontSize: 12 }} labelStyle={{ color: '#8B8B87' }} itemStyle={{ color: '#F5F5F4' }} cursor={{ fill: '#ffffff08', stroke: '#333' }} />
+                    <Line type="monotone" dataKey="realizedUsd" stroke="#F26A2E" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

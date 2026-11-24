@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { LogoMark } from '../components/Logo';
 import { useState } from 'react';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -27,22 +28,12 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-canvas to-white dark:from-navy-950 dark:to-navy-900 relative overflow-hidden">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-brand-500/10 blur-3xl -mt-32 pointer-events-none" />
-      <div className="absolute bottom-0 right-1/2 translate-x-1/2 w-[600px] h-[600px] rounded-full bg-purple-500/10 blur-3xl -mb-32 pointer-events-none" />
+    <div className="min-h-screen relative overflow-hidden">
 
       <div className="flex items-center justify-center min-h-screen px-4">
         <div className="max-w-md w-full">
           <div className="text-center mb-10">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-600 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-500/30 relative overflow-hidden">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-full h-full" fill="none" stroke="#FFFFFF" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 20 L12 4 L18 20"/>
-                <path d="M9 14 L15 14"/>
-                <path d="M20 4 L20 20"/>
-                <path d="M18 6 L22 6"/>
-              </svg>
-              <div className="absolute inset-0 bg-white/10" />
-            </div>
+            <div className="flex justify-center mb-5"><LogoMark size={28} /></div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Create your account</h2>
             <p className="text-slate-600 dark:text-slate-300">
               Start building with ApiTradeX today

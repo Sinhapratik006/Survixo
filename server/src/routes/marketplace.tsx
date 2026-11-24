@@ -1,5 +1,5 @@
 /**
- * Marketplace routes for buying and selling API keys via Dodo Payments (crypto).
+ * Marketplace routes for buying and selling API keys via direct USDC/USDT payments.
  *
  * Routes:
  *   GET    /api/marketplace/listings          - Browse active listings (public)
@@ -8,7 +8,8 @@
  *   PATCH  /api/marketplace/listings/:id      - Update a listing (seller)
  *   DELETE /api/marketplace/listings/:id      - Archive a listing (seller)
  *   POST   /api/marketplace/verify-key        - Probe an API key's health (seller)
- *   POST   /api/marketplace/checkout          - Create Dodo checkout session (buyer)
+ *   POST   /api/marketplace/payment           - Create USDC/USDT payment details (buyer)
+ *   POST   /api/marketplace/payment/confirm   - Confirm payment with tx hash (buyer/ops)
  *   GET    /api/marketplace/orders            - Buyer's orders (authenticated)
  *   GET    /api/marketplace/orders/:id/api-key - Reveal purchased key (buyer, PAID only)
  *   GET    /api/marketplace/my-listings       - Seller's listings (authenticated)
@@ -16,8 +17,7 @@
  *   GET    /api/marketplace/payout-account    - Seller's crypto wallet (authenticated)
  *   POST   /api/marketplace/payout-account    - Set seller's crypto wallet (authenticated)
  *   GET    /api/marketplace/seller-orders     - Seller's orders (authenticated)
- *   GET    /api/marketplace/config            - Dodo config (public)
- *   POST   /api/marketplace/webhooks/dodo     - Dodo webhook (no auth, raw body)
+ *   GET    /api/marketplace/payment-config    - USDC/USDT payment config (public)
  */
 
 import { Router, type Request, type NextFunction, type Response } from 'express';
@@ -30,13 +30,11 @@ import { parse } from '../middleware/error.js';
 import { requireOrg, requirePermission } from '../middleware/org.js';
 import { rateLimit, userKey } from '../middleware/rateLimit.js';
 import {
-  createDodoCheckout,
-  createDodoProductAndPrice,
-  verifyDodoSignature,
-  handleDodoWebhook,
-  getDodoConfig,
-  type DodoWebhookEvent,
-} from '../services/dodoPayments.js';
+  createUsdcUsdtPayment,
+  confirmUsdcUsdtPayment,
+  getUsdcUsdtConfig,
+  type PaymentDetails,
+} from '../services/usdcUsdtPayments.js';
 import { encryptSecret } from '../security/crypto.js';
 import { logger } from '../lib/logger.js';
 import { audit } from '../services/audit.js';
@@ -52,43 +50,6 @@ export const marketplaceRouter = Router();
 function creditValueUsd(priceCents: number): string {
   return (creditValueCentsFromPrice(priceCents) / 100).toFixed(2);
 }
-
-// ───────────── Dodo Webhook Router (no auth, raw body for signature verification) ─────────────
-
-export const dodoWebhookRouter = Router();
-
-dodoWebhookRouter.post('/', async (req, res, next) => {
-  try {
-    const webhookId = req.get('webhook-id') ?? '';
-    const timestamp = req.get('webhook-timestamp') ?? '';
-    const signature = req.get('webhook-signature') ?? '';
-
-    if (
-      !verifyDodoSignature(
-        (req.body as Buffer).toString('utf8'),
-        webhookId,
-        timestamp,
-        signature,
-        // An unset secret must fail verification, never throw.
-        env.DODO_PAYMENTS_WEBHOOK_KEY ?? '',
-      )
-    ) {
-      return res.status(400).json({ error: { code: 'invalid_signature', message: 'Invalid Dodo webhook signature' } });
-    }
-
-    let event: DodoWebhookEvent;
-    try {
-      event = JSON.parse((req.body as Buffer).toString('utf8'));
-    } catch {
-      return res.status(400).json({ error: { code: 'invalid_json', message: 'Invalid webhook payload' } });
-    }
-
-    const processed = await handleDodoWebhook(event);
-    return res.status(200).json({ received: true, processed });
-  } catch (err) {
-    next(err);
-  }
-});
 
 // ───────────── Public: Browse listings ─────────────
 
@@ -182,10 +143,10 @@ marketplaceRouter.get('/listings/:id', async (req, res) => {
   });
 });
 
-// ───────────── Dodo config for frontend (public) ─────────────
+// ───────────── USDC/USDT payment config for frontend (public) ─────────────
 
-marketplaceRouter.get('/config', async (_req, res) => {
-  res.json(getDodoConfig());
+marketplaceRouter.get('/payment-config', async (_req, res) => {
+  res.json(getUsdcUsdtConfig());
 });
 
 // ───────────── Auth + Org required middleware for all routes below ─────────────
@@ -292,27 +253,9 @@ marketplaceRouter.post('/listings', requirePermission('seller:manage'), async (r
   // Masked hint only — never expose more than the last 4 characters.
   const apiKeyPrefix = body.apiKey.length > 8 ? `••••${body.apiKey.slice(-4)}` : '••••';
 
-  let dodoProductId: string | undefined;
-  let dodoPriceId: string | undefined;
-  if (env.DODO_PAYMENTS_API_KEY) {
-    try {
-      const { productId, priceId } = await createDodoProductAndPrice({
-        listingId: 'pending',
-        title: body.title,
-        description: body.description,
-        amountCents,
-      });
-      dodoProductId = productId;
-      dodoPriceId = priceId;
-    } catch (err) {
-      logger.error({ err }, 'failed to create Dodo product/price, listing created without Dodo integration');
-    }
-  }
-
   // The listing id must exist before we can encrypt, because the encryption
   // context (`listing:<id>`) is bound as AAD and is the same context the
-  // webhook uses when delivering the key to a paying buyer. Encrypting with
-  // any other context would make the key undecryptable at delivery time.
+  // payment confirmation uses when delivering the key to a paying buyer.
   const listing = await prisma.$transaction(async (tx) => {
     const created = await tx.marketplaceListing.create({
       data: {
@@ -327,8 +270,6 @@ marketplaceRouter.post('/listings', requirePermission('seller:manage'), async (r
         status: 'ACTIVE',
         maxBuyers: body.maxBuyers ?? null,
         buyerCount: 0,
-        dodoProductId,
-        dodoPriceId,
       },
     });
     const encrypted = encryptSecret(body.apiKey, `listing:${created.id}`);
@@ -337,21 +278,6 @@ marketplaceRouter.post('/listings', requirePermission('seller:manage'), async (r
       data: { apiKeyEncrypted: JSON.stringify(encrypted) },
     });
   });
-
-  if (dodoProductId && env.DODO_PAYMENTS_API_KEY) {
-    try {
-      await fetch(`${env.DODO_PAYMENTS_BASE_URL ?? 'https://test.dodopayments.com'}/products/${dodoProductId}`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${env.DODO_PAYMENTS_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ metadata: { listing_id: listing.id } }),
-      }).catch(() => undefined);
-    } catch {
-      // Non-fatal
-    }
-  }
 
   await audit({
     orgId,
@@ -466,10 +392,10 @@ marketplaceRouter.delete('/listings/:id', requirePermission('seller:manage'), as
   const listing = await ownedListing(req, String(req.params.id));
 
   // Only a checkout the buyer is actively inside protects them. If we deleted
-  // the listing now, Dodo could still charge them and the webhook would then
-  // find no listing to decrypt a key from — they'd be paid-but-delivered-nothing.
+  // the listing now, a payment could still come in and we'd have no listing
+  // to deliver a key from — paid-but-delivered-nothing.
   //
-  // Failed attempts (no checkout id was ever handed to the buyer) and checkouts
+  // Failed attempts (no payment tx hash was ever provided) and checkouts
   // abandoned past the grace window must NOT block: nothing ever expires a
   // PENDING order, so otherwise a single aborted attempt would make the listing
   // permanently undeletable.
@@ -478,7 +404,7 @@ marketplaceRouter.delete('/listings/:id', requirePermission('seller:manage'), as
     where: {
       listingId: listing.id,
       status: 'PENDING',
-      dodoCheckoutId: { not: null },
+      paymentTxHash: { not: null },
       createdAt: { gte: new Date(Date.now() - CHECKOUT_GRACE_MS) },
     },
   });
@@ -491,8 +417,7 @@ marketplaceRouter.delete('/listings/:id', requirePermission('seller:manage'), as
   }
 
   // Everything else still PENDING is abandoned or was a failed attempt. Cancel
-  // it explicitly rather than letting the FK cascade quietly remove the row
-  // while Dodo could still charge against it.
+  // it explicitly rather than letting the FK cascade quietly remove the row.
   await prisma.order.updateMany({
     where: { listingId: listing.id, status: 'PENDING' },
     data: { status: 'CANCELLED' },
@@ -538,29 +463,34 @@ marketplaceRouter.delete('/listings/:id', requirePermission('seller:manage'), as
   res.json({ ok: true, deleted: true, archived: false, orderCount: 0 });
 });
 
-// ───────────── Buyer: Checkout ─────────────
+// ───────────── Buyer: Create USDC/USDT payment ─────────────
 
-const checkoutSchema = z.object({
+const paymentSchema = z.object({
   listingId: z.string().min(1),
   idempotencyKey: z.string().min(1).max(200),
+  token: z.enum(['USDC', 'USDT']).default('USDC'),
 });
 
 marketplaceRouter.post(
-  '/checkout',
+  '/payment',
   requirePermission('inference:use'),
   rateLimit({ name: 'checkout', windowSeconds: 60, max: 10, key: userKey }),
   async (req, res) => {
-    const body = parse(checkoutSchema, req.body);
+    const body = parse(paymentSchema, req.body);
 
-    if (!env.DODO_PAYMENTS_API_KEY) {
-      throw new HttpError(503, 'payment_not_configured', 'Payment gateway is not configured on this server.');
+    const walletAddress =
+      body.token === 'USDC' ? env.USDC_WALLET_ADDRESS : env.USDT_WALLET_ADDRESS;
+    if (!walletAddress) {
+      throw new HttpError(
+        503,
+        'payment_not_configured',
+        `Payment wallet address for ${body.token} is not configured on this server.`,
+      );
     }
 
-    // Dodo failures (bad/expired API key, gateway down) must surface as a
-    // clean 502 the client can show, never an unhandled 500.
-    let result;
+    let result: PaymentDetails;
     try {
-      result = await createDodoCheckout({
+      result = await createUsdcUsdtPayment({
         listingId: body.listingId,
         buyerOrgId: req.org!.id,
         idempotencyKey: body.idempotencyKey,
@@ -569,15 +499,43 @@ marketplaceRouter.post(
       throw new HttpError(
         502,
         'payment_gateway_error',
-        'The payment gateway rejected this checkout. Check the DODO_PAYMENTS_API_KEY configured on the server.',
+        'Failed to create payment details. Check the USDC/USDT wallet configuration on the server.',
       );
     }
 
     res.status(201).json({
-      checkoutId: result.checkoutId,
-      checkoutUrl: result.checkoutUrl,
       orderId: result.orderId,
+      paymentReference: result.paymentReference,
+      walletAddress: result.walletAddress,
+      token: result.token,
+      network: result.network,
+      amountUsd: result.amountUsd,
+      amountCents: result.amountCents,
+      expiresAt: result.expiresAt,
     });
+  },
+);
+
+// ───────────── Buyer/Ops: Confirm USDC/USDT payment ─────────────
+
+const confirmPaymentSchema = z.object({
+  orderId: z.string().min(1),
+  txHash: z.string().trim().min(1).max(128),
+});
+
+marketplaceRouter.post(
+  '/payment/confirm',
+  requirePermission('inference:use'),
+  rateLimit({ name: 'payment-confirm', windowSeconds: 60, max: 20, key: userKey }),
+  async (req, res) => {
+    const body = parse(confirmPaymentSchema, req.body);
+
+    const { orderId, status } = await confirmUsdcUsdtPayment({
+      orderId: body.orderId,
+      txHash: body.txHash,
+    });
+
+    res.json({ orderId, status });
   },
 );
 
@@ -603,6 +561,10 @@ marketplaceRouter.get('/orders', async (req, res) => {
       status: o.status,
       apiKeyDelivered: o.apiKeyDelivered ? 'delivered' : null,
       apiKeyDeliveredAt: o.apiKeyDeliveredAt,
+      paymentToken: o.paymentToken,
+      paymentNetwork: o.paymentNetwork,
+      paymentTxHash: o.paymentTxHash,
+      paymentConfirmed: o.paymentConfirmed,
       cryptoTxHash: o.cryptoTxHash,
       createdAt: o.createdAt,
     })),
@@ -851,6 +813,10 @@ marketplaceRouter.get('/seller-orders', async (req, res) => {
       sellerEarningUsd: (o.sellerEarningCents / 100).toFixed(2),
       status: o.status,
       apiKeyDelivered: o.apiKeyDelivered ? 'delivered' : null,
+      paymentToken: o.paymentToken,
+      paymentNetwork: o.paymentNetwork,
+      paymentTxHash: o.paymentTxHash,
+      paymentConfirmed: o.paymentConfirmed,
       createdAt: o.createdAt,
     })),
   });

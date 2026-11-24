@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { LogoMark } from '../../components/Logo';
 import Link from 'next/link';
 import { Menu, X, Sun, Moon, Eye, EyeOff, ShieldCheck, Info, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import Button from '../../components/Button';
@@ -174,15 +175,8 @@ export default function SellerCreatePage() {
         <div className="container-page">
           <div className="flex items-center justify-between h-16">
             <a href="/seller/dashboard" className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-brand-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-brand-500/30 relative overflow-hidden">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-full h-full" fill="none" stroke="#FFFFFF" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 20 L12 4 L18 20"/>
-                  <path d="M9 14 L15 14"/>
-                  <path d="M20 4 L20 20"/>
-                  <path d="M18 6 L22 6"/>
-                </svg>
-              </div>
-              <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">ApiTradeX</span>
+              <LogoMark size={18} />
+              <span className="font-mono font-bold text-[19px] tracking-[0.08em] text-ink">APITRADEX</span>
             </a>
             <div className="hidden md:flex items-center gap-6">
               <a href="/seller/dashboard" className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">

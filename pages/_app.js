@@ -7,7 +7,9 @@ import { isPublicPath } from '../lib/authGate.js';
 function GateSpinner() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-canvas dark:bg-navy-950">
-      <div className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-navy-700 border-t-brand-600 animate-spin" />
+      <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.08em] text-ink-muted">
+        <span className="live-dot" style={{ background: 'var(--acc)' }} /> Loading
+      </div>
     </div>
   );
 }
@@ -18,11 +20,9 @@ export default function MyApp({ Component, pageProps }) {
   const [authed, setAuthed] = useState(null);
   const needsGate = !isPublicPath(router.pathname);
 
+  // The design is dark-only; _document.js sets the class server-side too.
   useEffect(() => {
-    const stored = localStorage.getItem('apitradex-theme');
-    if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    }
+    document.documentElement.classList.add('dark');
   }, []);
 
   // Session gate: every gated route verifies the session first and sends

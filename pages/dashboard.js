@@ -205,11 +205,11 @@ export default function DashboardPage() {
                   <div className="h-64 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={summary?.series || []}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-slate-200 dark:stroke-navy-700" />
-                        <XAxis dataKey="day" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-                        <YAxis tickFormatter={(v) => '$' + v.toFixed(0)} tick={{ fontSize: 11 }} />
-                        <Tooltip />
-                        <Bar dataKey="costUsd" fill="#0ea5e9" radius={[2, 2, 0, 0]} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#232323" />
+                        <XAxis stroke="#333333" dataKey="day" tick={{ fontSize: 11, fill: '#8B8B87', fontFamily: '"Geist Mono", monospace' }} interval="preserveStartEnd" />
+                        <YAxis stroke="#333333" tickFormatter={(v) => '$' + v.toFixed(0)} tick={{ fontSize: 11, fill: '#8B8B87', fontFamily: '"Geist Mono", monospace' }} />
+                        <Tooltip contentStyle={{ background: '#0a0a0a', border: '1px solid #333', borderRadius: 0, fontFamily: '"Geist Mono", monospace', fontSize: 12 }} labelStyle={{ color: '#8B8B87' }} itemStyle={{ color: '#F5F5F4' }} cursor={{ fill: '#ffffff08', stroke: '#333' }} />
+                        <Bar dataKey="costUsd" fill="#F26A2E" radius={0} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>

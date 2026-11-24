@@ -26,7 +26,7 @@ import { alertsRouter, webhooksRouter } from './routes/alerts.js';
 import { adminRouter } from './routes/admin.js';
 import { messagesRouter } from './routes/messages.js';
 import { v1Router } from './routes/v1.js';
-import { marketplaceRouter, dodoWebhookRouter } from './routes/marketplace.js';
+import { marketplaceRouter } from './routes/marketplace.js';
 
 export function createApp() {
   const app = express();
@@ -90,9 +90,8 @@ export function createApp() {
   // Use express.raw() for webhook routes that need signature verification.
   // TODO: express.raw() on specific paths may interfere with express.json() globally.
   // For now, webhook body is handled via req.body (already parsed by express.json).
-  // Signature verification for Dodo webhooks requires raw body - revisit in production.
+  // Webhook signature verification requires raw body - revisit in production.
   app.use('/api/billing/stripe/webhook', stripeWebhookRouter);
-  app.use('/api/marketplace/webhooks/dodo', dodoWebhookRouter);
 
   // Custom JSON body parser
   app.use((req, res, next) => {
