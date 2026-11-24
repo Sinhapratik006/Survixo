@@ -251,9 +251,15 @@ adminRouter.post('/messages/conversations/:id/messages', requireAdmin, async (re
   };
   if (!conversation) return next(notFound('Conversation not found'));
 
-  // Verify the admin is a participant in this conversation
+  // Admins can reply in any conversation; join it first so the thread also
+  // shows up in the admin's own inbox and the reply has a valid sender.
   const isParticipant = conversation.participants.some((p) => p.id === adminId);
-  if (!isParticipant) return next(badRequest('You are not a participant in this conversation'));
+  if (!isParticipant) {
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: { participants: { connect: { id: adminId } } },
+    });
+  }
 
   const message = await prisma.message.create({
     data: { conversationId: conversationId, senderId: adminId, body },

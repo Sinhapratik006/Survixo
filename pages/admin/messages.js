@@ -10,11 +10,15 @@ import { Send, Mail, ArrowLeft, User, ShieldCheck, Clock, Search, Plus } from 'l
 export default function AdminMessages() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [me, setMe] = useState(null);
 
   const [tab, setTab] = useState('users'); // 'users' | 'conversations'
   const [users, setUsers] = useState([]);
   const [conversations, setConversations] = useState([]);
   const [activeConversation, setActiveConversation] = useState(null);
+  // Set when the admin picked a user with no existing conversation yet; the
+  // first message sent then creates the conversation.
+  const [recipient, setRecipient] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,6 +35,7 @@ export default function AdminMessages() {
         if (cancelled) return;
         if (res.data && res.data.user) {
           setIsAdmin(res.data.user.role === 'ADMIN');
+          setMe(res.data.user);
           if (res.data.user.role !== 'ADMIN') {
             window.location.href = '/messages';
           } else {
@@ -81,14 +86,7 @@ export default function AdminMessages() {
       const res = await api.get(`/api/admin/messages/conversations/${conversationId}/messages`);
       const data = res.data || {};
       setMessages(data.messages || []);
-      // Only set active conversation if it exists in our list, otherwise clear it
-      const conversationExists = conversations.some(
-        (c) => c.id === conversationId
-      );
-      setActiveConversation(conversationExists ? data.conversation : null);
-      if (!conversationExists) {
-        setError('Conversation not found - please reload the conversations list');
-      }
+      if (data.conversation) setActiveConversation(data.conversation);
     } catch (e) {
       setError(e.message || 'Failed to load messages');
     } finally {
@@ -105,36 +103,42 @@ export default function AdminMessages() {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    const body = newMessage.trim();
+    if (!body || sending) return;
     if (!isAdmin) {
       setError('You must be an admin to send messages');
-      setSending(false);
       return;
     }
-    if (!activeConversation?.id) {
+    if (!recipient && !activeConversation?.id) {
       setError('No conversation selected');
-      setSending(false);
-      return;
-    }
-    // Verify conversation exists by checking it's in our conversations list
-    const conversationExists = conversations.some(
-      (c) => c.id === activeConversation.id
-    );
-    if (!conversationExists) {
-      setError('Selected conversation no longer exists');
-      setSending(false);
       return;
     }
     setSending(true);
     setError(null);
     setSuccess(null);
     try {
-      const res = await api.post(`/api/admin/messages/conversations/${activeConversation.id}/messages`, {
-        body: newMessage,
-      });
+      if (recipient) {
+        // First message to this user: creates the conversation (or reuses an
+        // existing one server-side) and returns its id.
+        const res = await api.post('/api/admin/messages/conversations', {
+          participantId: recipient.id,
+          body,
+        });
+        setActiveConversation({
+          id: res.data.conversationId,
+          participants: res.data.participants || [me, recipient].filter(Boolean),
+        });
+        setRecipient(null);
+        setMessages((prev) => [...prev, res.data.message]);
+        loadConversations();
+      } else {
+        const res = await api.post(`/api/admin/messages/conversations/${activeConversation.id}/messages`, {
+          body,
+        });
+        setMessages((prev) => [...prev, res.data.message]);
+      }
       setNewMessage('');
       setSuccess('Message sent');
-      setMessages((prev) => [...prev, res.data.message]);
     } catch (e) {
       setError(e.message || 'Failed to send message');
     } finally {
@@ -142,40 +146,30 @@ export default function AdminMessages() {
     }
   };
 
-  const handleStartConversation = async (e) => {
-    e.preventDefault();
-    if (!isAdmin) {
-      setError('You must be an admin to start conversations');
-      setSending(false);
-      return;
-    }
-    if (!activeConversation?.id) {
-      setError('No conversation selected');
-      setSending(false);
-      return;
-    }
-    setSending(true);
+  const openConversation = (conv) => {
+    setRecipient(null);
+    setActiveConversation(conv);
+    setMessages([]);
+    setNewMessage('');
+    setTab('conversation');
     setError(null);
     setSuccess(null);
-    try {
-      const res = await api.post('/api/admin/messages/conversations', {
-        participantId: activeConversation?.id,
-        body: newMessage,
-      });
-      setNewMessage('');
-      setSuccess('Conversation started');
-      setActiveConversation(null);
-      setTab('conversations');
-      loadConversations();
-    } catch (e) {
-      setError(e.message || 'Failed to start conversation');
-    } finally {
-      setSending(false);
-    }
+    loadMessages(conv.id);
   };
 
-  const openConversation = (conv) => {
-    setActiveConversation(conv);
+  const openUser = (u) => {
+    // Reuse the admin's existing thread with this user when there is one.
+    const existing = conversations.find(
+      (c) => c.participants.some((p) => p.id === u.id) && (!me || c.participants.some((p) => p.id === me.id)),
+    );
+    if (existing) {
+      openConversation(existing);
+      return;
+    }
+    setRecipient(u);
+    setActiveConversation({ id: null, participants: [me, u].filter(Boolean) });
+    setMessages([]);
+    setNewMessage('');
     setTab('conversation');
     setError(null);
     setSuccess(null);
@@ -184,6 +178,7 @@ export default function AdminMessages() {
   const goBack = () => {
     setTab('conversations');
     setActiveConversation(null);
+    setRecipient(null);
     setMessages([]);
   };
 
@@ -279,13 +274,7 @@ export default function AdminMessages() {
                   {filteredUsers.map((u) => (
                     <div
                       key={u.id}
-                      onClick={() => {
-                        setActiveConversation(u);
-                        setTab('conversation');
-                        setNewMessage('');
-                        setError(null);
-                        setSuccess(null);
-                      }}
+                      onClick={() => openUser(u)}
                       className="px-6 py-4 hover:bg-slate-50 dark:hover:bg-navy-800/30 cursor-pointer transition-colors border-b border-slate-200/50 dark:border-navy-700/30 last:border-0"
                     >
                       <div className="flex items-center justify-between">
@@ -416,11 +405,13 @@ export default function AdminMessages() {
                 )}
                 {!loading && messages.length === 0 && (
                   <div className="text-center py-10">
-                    <p className="text-sm text-slate-600 dark:text-slate-300">No messages yet</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      {recipient ? `Send the first message to ${recipient.name || recipient.email}` : 'No messages yet'}
+                    </p>
                   </div>
                 )}
                 {messages.map((msg) => {
-                  const isAdmin = msg.sender.role === 'ADMIN';
+                  const isAdmin = me ? msg.senderId === me.id || msg.sender?.id === me.id : msg.sender?.role === 'ADMIN';
                   return (
                     <div
                       key={msg.id}
