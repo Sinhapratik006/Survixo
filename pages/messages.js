@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+const CHAT_POLL_MS = 10000;
+const INBOX_POLL_MS = 30000;
 import Link from 'next/link';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -23,6 +26,11 @@ export default function Messages() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const messagesEndRef = useRef(null);
+  // Polling stops until this timestamp after a 429.
+  const pollPausedUntil = useRef(0);
+  const backOff = (e) => {
+    if (e && e.status === 429) pollPausedUntil.current = Date.now() + (e.retryAfter || 60) * 1000;
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -56,6 +64,7 @@ export default function Messages() {
       const res = await api.get('/api/messages/conversations');
       setConversations(res.data.data || []);
     } catch (e) {
+      backOff(e);
       if (!silent) setError(e.message || 'Failed to load conversations');
     } finally {
       if (!silent) setLoading(false);
@@ -80,6 +89,7 @@ export default function Messages() {
         });
       }
     } catch (e) {
+      backOff(e);
       if (!silent) setError(e.message || 'Failed to load messages');
     } finally {
       if (!silent) setLoading(false);
@@ -95,10 +105,10 @@ export default function Messages() {
   useEffect(() => {
     if (checkingAuth) return undefined;
     const timer = setInterval(() => {
-      if (document.hidden) return;
+      if (document.hidden || Date.now() < pollPausedUntil.current) return;
       if (tab === 'conversation' && activeId) loadMessages(activeId, { silent: true });
       else if (tab === 'inbox') loadConversations({ silent: true });
-    }, 5000);
+    }, tab === 'conversation' ? CHAT_POLL_MS : INBOX_POLL_MS);
     return () => clearInterval(timer);
   }, [checkingAuth, tab, activeId, loadMessages, loadConversations]);
 

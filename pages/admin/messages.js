@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+
+const CHAT_POLL_MS = 10000;
 import Link from 'next/link';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
@@ -26,6 +28,8 @@ export default function AdminMessages() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [searchUser, setSearchUser] = useState('');
+  // Polling stops until this timestamp after a 429.
+  const pollPausedUntil = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,6 +94,7 @@ export default function AdminMessages() {
         setActiveConversation((prev) => (prev && prev.id !== data.conversation.id ? prev : data.conversation));
       }
     } catch (e) {
+      if (e && e.status === 429) pollPausedUntil.current = Date.now() + (e.retryAfter || 60) * 1000;
       if (!silent) setError(e.message || 'Failed to load messages');
     } finally {
       if (!silent) setLoading(false);
@@ -108,8 +113,8 @@ export default function AdminMessages() {
   useEffect(() => {
     if (tab !== 'conversation' || !activeId) return undefined;
     const timer = setInterval(() => {
-      if (!document.hidden) loadMessages(activeId, { silent: true });
-    }, 5000);
+      if (!document.hidden && Date.now() >= pollPausedUntil.current) loadMessages(activeId, { silent: true });
+    }, CHAT_POLL_MS);
     return () => clearInterval(timer);
   }, [tab, activeId, loadMessages]);
 
