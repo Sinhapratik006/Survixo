@@ -9,9 +9,9 @@ export const CSRF_COOKIE = 'nx_csrf';
 
 const secureCookies = () => env.isProd || env.APP_URL.startsWith('https://');
 
-export function clientIp(req: Request): string | null {
-  return req.ip ?? null;
-}
+import { clientIp } from '../security/clientIp.js';
+
+export { clientIp };
 
 /** Create a new session (fresh token on every sign-in to prevent fixation) and set cookies. */
 export async function createSession(res: Response, req: Request, userId: string): Promise<void> {

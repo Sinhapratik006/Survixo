@@ -23,6 +23,19 @@ export interface KvStore {
 class MemoryStore implements KvStore {
   readonly kind = 'memory' as const;
   private data = new Map<string, { value: string; expiresAt: number }>();
+  private sweeper = setInterval(() => this.sweep(), 60_000);
+
+  constructor() {
+    this.sweeper.unref?.();
+  }
+
+  /** Drop expired entries; per-window rate-limit keys are never read again once their minute ends. */
+  private sweep() {
+    const now = Date.now();
+    for (const [key, entry] of this.data) {
+      if (entry.expiresAt <= now) this.data.delete(key);
+    }
+  }
 
   private live(key: string) {
     const entry = this.data.get(key);
@@ -64,6 +77,7 @@ class MemoryStore implements KvStore {
     return true;
   }
   async close() {
+    clearInterval(this.sweeper);
     this.data.clear();
   }
 }

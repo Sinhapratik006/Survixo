@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { store } from '../lib/store.js';
 import { tooManyRequests } from '../lib/errors.js';
 import { logger } from '../lib/logger.js';
+import { clientIp } from '../security/clientIp.js';
 
 export interface RateLimitOptions {
   name: string;
@@ -42,5 +43,5 @@ export function rateLimit(opts: RateLimitOptions) {
   };
 }
 
-export const ipKey = (req: Request) => req.ip ?? 'unknown';
+export const ipKey = (req: Request) => clientIp(req) ?? 'unknown';
 export const userKey = (req: Request) => req.auth?.user.id ?? null;
