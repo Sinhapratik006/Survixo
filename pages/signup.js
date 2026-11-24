@@ -5,6 +5,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import { Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { api } from '../lib/api.js';
+import GoogleSignIn from '../components/GoogleSignIn';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
@@ -92,7 +93,9 @@ export default function SignupPage() {
             </Button>
           </form>
 
-          <p className="mt-10 text-center text-sm text-slate-600 dark:text-slate-300">
+          <GoogleSignIn label="Sign up with Google" />
+
+          <p className="mt-8 text-center text-sm text-slate-600 dark:text-slate-300">
             Already have an account?{' '}
             <Link href="/login" className="text-slate-600 dark:text-slate-300 font-medium hover:underline transition-colors">
               Sign in

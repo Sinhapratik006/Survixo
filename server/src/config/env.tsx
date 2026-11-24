@@ -17,12 +17,16 @@ const csv = z
       .filter(Boolean),
   );
 
+const stripTrailingSlash = (url: string) => url.replace(/\/+$/, '');
+
 const schema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().positive().default(8787),
-    APP_URL: z.string().url().default('http://localhost:5173'),
-    API_PUBLIC_URL: z.string().url().optional(),
+    // Trailing slashes are stripped: code builds URLs as `${APP_URL}/path`, and
+    // "https://site.com//login" is read by browsers as a different host.
+    APP_URL: z.string().url().default('http://localhost:5173').transform(stripTrailingSlash),
+    API_PUBLIC_URL: z.string().url().optional().transform((v) => (v ? stripTrailingSlash(v) : v)),
     DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
     REDIS_URL: z.string().optional(),
     TRUST_PROXY: bool(false),

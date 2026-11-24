@@ -6,6 +6,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import { api } from '../lib/api.js';
+import GoogleSignIn, { googleErrorMessage } from '../components/GoogleSignIn';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,18 +15,23 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Return the user to the page they came from (e.g. /seller/create), but only
+  // same-origin relative paths so this can't be an open redirect.
+  const next = router.query.next;
+  const safeNext =
+    typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') && !next.startsWith('/\\')
+      ? next
+      : '/marketplace';
+  // Set by the Google callback when sign-in fails.
+  const shownError = error || googleErrorMessage(router.query.error);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
       await api.post('/api/auth/login', { email, password });
-      // Return the user to the page they came from (e.g. /seller/create),
-      // but only allow same-origin relative paths so this can't be an open redirect.
-      const next = router.query.next;
-      const safeNext =
-        typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') && !next.startsWith('/\\');
-      window.location.href = safeNext ? next : '/marketplace';
+      window.location.href = safeNext;
     } catch (err) {
       setError(err.message || 'Incorrect email or password.');
     } finally {
@@ -46,9 +52,9 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {error && (
-            <div className="mb-5 p-3 rounded-xl border border-rose-200 dark:border-rose-900/30 bg-rose-50 dark:bg-rose-900/10 text-sm text-rose-700 dark:text-rose-400">
-              {error}
+          {shownError && (
+            <div role="alert" className="mb-5 p-3 rounded-xl border border-rose-200 dark:border-rose-900/30 bg-rose-50 dark:bg-rose-900/10 text-sm text-rose-700 dark:text-rose-400">
+              {shownError}
             </div>
           )}
 
@@ -85,27 +91,14 @@ export default function LoginPage() {
             </Button>
           </form>
 
+          <GoogleSignIn redirect={safeNext} />
+
           <p className="mt-8 text-center text-sm text-slate-600 dark:text-slate-300">
             Don't have an account?{' '}
             <Link href="/signup" className="text-slate-600 dark:text-slate-300 font-medium hover:underline transition-colors">
               Create one
             </Link>
           </p>
-
-          <div className="mt-10 relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-slate-200 dark:border-navy-800"></span>
-            </div>
-            <div className="relative flex justify-center font-mono text-[11px] uppercase tracking-[0.08em]">
-              <span className="bg-white dark:bg-navy-950 px-3 text-slate-400">Or continue with</span>
-            </div>
-          </div>
-          <div className="mt-6">
-            <Button variant="outline" className="w-full">
-              <span className="w-5 h-5 border border-line-2 flex items-center justify-center text-[10px]">G</span>
-              Sign in with Google
-            </Button>
-          </div>
         </div>
       </div>
     </div>
