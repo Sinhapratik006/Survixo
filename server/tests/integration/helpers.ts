@@ -14,6 +14,10 @@ export function getApp() {
 }
 
 export async function resetDatabase() {
+  // Hard stop: without the integration vitest config (global-setup + setup-env)
+  // DATABASE_URL falls back to .env, i.e. a real database. Never truncate that.
+  const [{ db }] = await prisma.$queryRaw<Array<{ db: string }>>`SELECT current_database() AS db`;
+  if (!db.endsWith('_test')) throw new Error(`Refusing to reset non-test database "${db}"`);
   const tables = await prisma.$queryRaw<Array<{ tablename: string }>>`
     SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> '_prisma_migrations'`;
   if (tables.length) await prisma.$executeRawUnsafe(`TRUNCATE ${tables.map((t) => `"${t.tablename}"`).join(', ')} CASCADE`);
