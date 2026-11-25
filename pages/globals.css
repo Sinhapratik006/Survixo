@@ -12,7 +12,8 @@
   --text-2: #c9c9c6;
   --muted: #8b8b87;
   --faint: #5c5c59;
-  --acc: #f26a2e;
+  --acc: #3b82f6;
+  --acc-grad: linear-gradient(135deg, #22d3ee 0%, #3b82f6 50%, #6366f1 100%);
   --green: #4ade80;
   color-scheme: dark;
 }
@@ -27,8 +28,12 @@ body {
   font: 15px/1.55 Geist, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
-  background-image: radial-gradient(#ffffff0d 1px, transparent 1px);
-  background-size: 4px 4px;
+  /* Soft cool-blue glow at the top, over the dot grid. */
+  background-image:
+    radial-gradient(60% 520px at 50% 0%, rgba(59, 130, 246, 0.14), rgba(34, 211, 238, 0.05) 45%, transparent 75%),
+    radial-gradient(#ffffff0d 1px, transparent 1px);
+  background-size: 100% 100%, 4px 4px;
+  background-repeat: no-repeat, repeat;
 }
 
 /* Page backgrounds were solid; let the dot grid show through. */
@@ -39,7 +44,7 @@ body {
 
 ::selection {
   background: var(--acc);
-  color: #0a0a0a;
+  color: #fff;
 }
 
 a:focus-visible,
@@ -112,7 +117,12 @@ summary:focus-visible {
 
 .text-gradient {
   color: var(--acc);
+  background: var(--acc-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
+
 
 ::-webkit-scrollbar {
   width: 8px;

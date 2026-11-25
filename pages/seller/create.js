@@ -175,7 +175,7 @@ export default function SellerCreatePage() {
         <div className="container-page">
           <div className="flex items-center justify-between h-16">
             <a href="/seller/dashboard" className="flex items-center gap-2">
-              <LogoMark size={18} />
+              <LogoMark size={24} />
               <span className="font-mono font-bold text-[19px] tracking-[0.08em] text-ink">APITRADEX</span>
             </a>
             <div className="hidden md:flex items-center gap-6">

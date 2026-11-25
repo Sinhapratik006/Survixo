@@ -45,7 +45,7 @@ export default function LoginPage() {
       <div className="flex items-center justify-center min-h-screen px-4">
         <div className="max-w-md w-full">
           <div className="text-center mb-10">
-            <div className="flex justify-center mb-5"><LogoMark size={28} /></div>
+            <div className="flex justify-center mb-5"><LogoMark size={56} /></div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Welcome back</h2>
             <p className="text-slate-600 dark:text-slate-300">
               Sign in to your ApiTradeX account

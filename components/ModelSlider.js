@@ -290,7 +290,7 @@ export default function ModelSlider({
                   whileHover={{ scale: 1.3 }}
                   animate={{
                     scale: activePage === p ? 1.2 : 1,
-                    backgroundColor: activePage === p ? '#F26A2E' : 'transparent',
+                    backgroundColor: activePage === p ? '#3B82F6' : 'transparent',
                   }}
                   transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                   onClick={() => scrollToPage(p)}

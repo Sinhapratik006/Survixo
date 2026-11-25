@@ -294,7 +294,7 @@ export default function HomePage() {
           <div className="border border-line-2 bg-[#0a0a0a] grid md:grid-cols-[170px_1fr] md:min-h-[520px] shadow-[0_40px_120px_#000]">
             <aside className="hidden md:flex flex-col gap-1 border-r border-line px-3 py-4">
               <div className="flex items-center gap-2 mx-1 mb-4 font-mono font-bold text-[13px] tracking-[0.08em]">
-                <LogoMark size={13} /> APITRADEX
+                <LogoMark size={18} /> APITRADEX
               </div>
               {['Overview', 'Keys', 'Usage', 'Marketplace', 'Billing'].map((s, i) => (
                 <span

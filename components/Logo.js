@@ -3,19 +3,22 @@ import { cn } from './lib/cn.js';
 
 export function LogoMark({ size = 18, className = '' }) {
   return (
-    <i
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/logo.png"
+      alt=""
       aria-hidden="true"
-      className={cn('block shrink-0 bg-brand-500', className)}
-      style={{
-        width: size,
-        height: size,
-        clipPath: 'polygon(0 0,100% 0,100% 100%,35% 100%,0 65%)',
-      }}
+      width={size}
+      height={size}
+      draggable={false}
+      // `lighten` drops the logo's black background into the page so only the white mark shows.
+      className={cn('block shrink-0 object-contain mix-blend-lighten select-none', className)}
+      style={{ width: size, height: size }}
     />
   );
 }
 
-export default function Logo({ className = '', size = 18 }) {
+export default function Logo({ className = '', size = 30 }) {
   return (
     <Link
       href="/"

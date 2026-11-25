@@ -4,25 +4,54 @@ import type { Config } from 'tailwindcss';
  * Design system: dark, hairline-bordered, square-cornered, mono-labelled.
  * The site is dark-only (see pages/_document.js). Existing class names are
  * kept and remapped here so every page picks up the new look:
- *   brand  → orange accent (#f26a2e)
+ *   brand  → cool blue accent (#3b82f6), used as a cyan→blue→indigo gradient
  *   navy   → near-black panels and hairlines
  *   slate  → warm neutral grays
- *   indigo/purple/violet/blue → accent, so old gradients stay on-palette
+ *   blue → accent; indigo/purple/violet/fuchsia → indigo; cyan → cyan
  *   rounded-* → square (rounded-full kept for dots, spinners, avatars)
  */
 
 const accent = {
-  50: '#FEF3EC',
-  100: '#FDE3D3',
-  200: '#FBC4A5',
-  300: '#F8A06F',
-  400: '#F5844A',
-  500: '#F26A2E',
-  600: '#E1561A',
-  700: '#BB4214',
-  800: '#953617',
-  900: '#782F16',
-  950: '#411509',
+  50: '#EEF6FF',
+  100: '#D9EBFF',
+  200: '#BCDCFF',
+  300: '#8EC6FF',
+  400: '#59A5FF',
+  500: '#3B82F6',
+  600: '#2563EB',
+  700: '#1D4ED8',
+  800: '#1E40AF',
+  900: '#1E3A8A',
+  950: '#172554',
+};
+
+// Gradient partners so `from-brand-500 to-indigo-500` etc. read as cool blue sweeps.
+const indigo = {
+  50: '#EEF2FF',
+  100: '#E0E7FF',
+  200: '#C7D2FE',
+  300: '#A5B4FC',
+  400: '#818CF8',
+  500: '#6366F1',
+  600: '#4F46E5',
+  700: '#4338CA',
+  800: '#3730A3',
+  900: '#312E81',
+  950: '#1E1B4B',
+};
+
+const cyan = {
+  50: '#ECFEFF',
+  100: '#CFFAFE',
+  200: '#A5F3FC',
+  300: '#67E8F9',
+  400: '#22D3EE',
+  500: '#06B6D4',
+  600: '#0891B2',
+  700: '#0E7490',
+  800: '#155E75',
+  900: '#164E63',
+  950: '#083344',
 };
 
 const neutral = {
@@ -65,12 +94,12 @@ export default {
         brand: accent,
         accent: accent[500],
         secondary: accent[500],
-        indigo: accent,
-        purple: accent,
-        violet: accent,
-        fuchsia: accent,
+        indigo,
+        purple: indigo,
+        violet: indigo,
+        fuchsia: indigo,
         blue: accent,
-        cyan: accent,
+        cyan,
         slate: neutral,
         gray: neutral,
         navy: {
@@ -112,6 +141,10 @@ export default {
       fontSize: {
         h1: ['2.5rem', { lineHeight: '1.02', letterSpacing: '-0.04em', fontWeight: '700' }],
         h2: ['1.75rem', { lineHeight: '1.1', letterSpacing: '-0.03em', fontWeight: '700' }],
+      },
+      backgroundImage: {
+        'brand-gradient': 'linear-gradient(135deg, #22D3EE 0%, #3B82F6 50%, #6366F1 100%)',
+        'brand-gradient-soft': 'linear-gradient(135deg, #67E8F9 0%, #59A5FF 50%, #818CF8 100%)',
       },
       maxWidth: {
         page: '1320px',

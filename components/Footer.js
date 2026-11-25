@@ -50,7 +50,7 @@ export default function Footer() {
       <div className="container-page">
         <div className="grid grid-cols-2 md:grid-cols-6 gap-6 pt-[50px] pb-10">
           <div className="col-span-2 md:col-span-1">
-            <Logo className="text-[15px]" size={14} />
+            <Logo className="text-[15px]" size={24} />
             <p className="mt-4 font-mono text-[12.5px] leading-relaxed text-ink-muted max-w-[220px]">
               One OpenAI-compatible API. Every model. Routed for cost.
             </p>
