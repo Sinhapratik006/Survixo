@@ -68,12 +68,14 @@ export function createApp() {
         },
       },
       crossOriginEmbedderPolicy: false,
+      // The SPA may call the API on a sibling subdomain (www -> api).
+      crossOriginResourcePolicy: { policy: 'same-site' },
     }),
   );
 
-  // Cross-origin access for the Next.js frontend (dev) and production SPA.
-  const corsOrigin = env.APP_URL.replace(/\/$/, '');
-  app.use(cors({ origin: corsOrigin, credentials: true }));
+  // Cross-origin access for the SPA when it calls the API directly
+  // (api.<domain>) instead of through the Vercel/Next rewrite.
+  app.use(cors({ origin: env.allowedOrigins, credentials: true, exposedHeaders: ['Retry-After', 'RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset'] }));
 
   app.get('/healthz', (_req, res) => res.json({ ok: true }));
 

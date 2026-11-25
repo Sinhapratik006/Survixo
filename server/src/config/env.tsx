@@ -27,6 +27,12 @@ const schema = z
     // "https://site.com//login" is read by browsers as a different host.
     APP_URL: z.string().url().default('http://localhost:5173').transform(stripTrailingSlash),
     API_PUBLIC_URL: z.string().url().optional().transform((v) => (v ? stripTrailingSlash(v) : v)),
+    // Set when the SPA calls the API on a sibling subdomain (www.example.com ->
+    // api.example.com): cookies are scoped to the parent (".example.com") so the
+    // SPA can read the CSRF cookie and both hosts share the session.
+    COOKIE_DOMAIN: z.string().optional(),
+    // Additional browser origins allowed for CORS + CSRF (e.g. the apex domain).
+    EXTRA_ORIGINS: csv,
     DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
     REDIS_URL: z.string().optional(),
     TRUST_PROXY: bool(false),
@@ -101,6 +107,12 @@ export const env = {
   isProd: parsed.data.NODE_ENV === 'production',
   isTest: parsed.data.NODE_ENV === 'test',
   apiPublicUrl: parsed.data.API_PUBLIC_URL ?? parsed.data.APP_URL,
+  /** Browser origins trusted for credentialed CORS and the CSRF Origin check. */
+  allowedOrigins: [
+    ...new Set(
+      [parsed.data.APP_URL, parsed.data.API_PUBLIC_URL ?? parsed.data.APP_URL, ...parsed.data.EXTRA_ORIGINS].map((u) => new URL(u).origin),
+    ),
+  ],
   googleEnabled: Boolean(parsed.data.GOOGLE_CLIENT_ID && parsed.data.GOOGLE_CLIENT_SECRET),
   googleRedirectUri:
     parsed.data.GOOGLE_REDIRECT_URI ?? `${parsed.data.APP_URL.replace(/\/$/, '')}/api/auth/google/callback`,

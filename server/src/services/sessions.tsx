@@ -28,14 +28,19 @@ export async function createSession(res: Response, req: Request, userId: string)
       expiresAt: new Date(Date.now() + maxAge),
     },
   });
-  res.cookie(SESSION_COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: secureCookies(), path: '/', maxAge });
+  const domain = env.COOKIE_DOMAIN || undefined;
+  res.cookie(SESSION_COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: secureCookies(), path: '/', domain, maxAge });
   // Readable by the SPA (double-submit CSRF token); useless to an attacker without the httpOnly session.
-  res.cookie(CSRF_COOKIE, csrf, { httpOnly: false, sameSite: 'lax', secure: secureCookies(), path: '/', maxAge });
+  res.cookie(CSRF_COOKIE, csrf, { httpOnly: false, sameSite: 'lax', secure: secureCookies(), path: '/', domain, maxAge });
 }
 
 export function clearSessionCookies(res: Response): void {
-  res.clearCookie(SESSION_COOKIE, { path: '/' });
-  res.clearCookie(CSRF_COOKIE, { path: '/' });
+  const domain = env.COOKIE_DOMAIN || undefined;
+  for (const name of [SESSION_COOKIE, CSRF_COOKIE]) {
+    res.clearCookie(name, { path: '/', domain });
+    // Also drop any host-only copy left from before COOKIE_DOMAIN was set.
+    if (domain) res.clearCookie(name, { path: '/' });
+  }
 }
 
 export async function revokeAllSessions(userId: string, exceptSessionId?: string): Promise<number> {

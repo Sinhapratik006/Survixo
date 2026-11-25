@@ -31,9 +31,7 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction) {
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
-function allowedOrigins() {
-  return new Set([new URL(env.APP_URL).origin, new URL(env.apiPublicUrl).origin]);
-}
+const allowedOrigins = () => new Set(env.allowedOrigins);
 
 /**
  * CSRF defence for cookie-authenticated routes:

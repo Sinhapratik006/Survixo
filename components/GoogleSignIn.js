@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../lib/api.js';
+import { api, apiUrl } from '../lib/api.js';
 
 /** Messages for the `?error=` codes the Google callback redirects back with. */
 const GOOGLE_ERRORS = {
@@ -56,7 +56,7 @@ export default function GoogleSignIn({ redirect = '/marketplace', label = 'Conti
 
   const start = () => {
     setLeaving(true);
-    window.location.href = `/api/auth/google/start?redirect=${encodeURIComponent(redirect)}`;
+    window.location.href = apiUrl(`/api/auth/google/start?redirect=${encodeURIComponent(redirect)}`);
   };
 
   return (
