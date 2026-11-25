@@ -89,9 +89,11 @@ adminRouter.get('/messages/users', requireAdmin, async (_req: Request, res: Resp
   res.json({ data: users });
 });
 
-/** List all platform conversations (admin only). */
-adminRouter.get('/messages/conversations', requireAdmin, async (_req: Request, res: Response) => {
+/** List the calling admin's own conversations (admin only). Other admins' threads are not visible. */
+adminRouter.get('/messages/conversations', requireAdmin, async (req: Request, res: Response) => {
+  const adminId = req.auth!.user.id;
   const conversations = await prisma.conversation.findMany({
+    where: { participants: { some: { id: adminId } } },
     include: {
       participants: {
         select: { id: true, email: true, name: true, role: true, avatarUrl: true },
@@ -120,13 +122,14 @@ adminRouter.get('/messages/conversations', requireAdmin, async (_req: Request, r
   });
 });
 
-/** Get messages in any conversation (admin only). */
+/** Get messages in one of the calling admin's own conversations (admin only). */
 adminRouter.get('/messages/conversations/:id/messages', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  const adminId = req.auth!.user.id;
   const { id } = req.params;
   const conversationId = typeof id === 'string' ? id : id?.[0];
 
-  const conversation = (await prisma.conversation.findUnique({
-    where: { id: conversationId },
+  const conversation = (await prisma.conversation.findFirst({
+    where: { id: conversationId, participants: { some: { id: adminId } } },
     include: {
       participants: { select: { id: true, email: true, name: true, role: true } },
       messages: {
@@ -229,7 +232,7 @@ adminRouter.post('/messages/conversations', requireAdmin, async (req: Request, r
   });
 });
 
-/** Send a message in any conversation (admin only). */
+/** Send a message in one of the calling admin's own conversations (admin only). */
 const adminSendMessageSchema = z.object({ body: z.string().trim().min(1).max(5000) });
 adminRouter.post('/messages/conversations/:id/messages', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   const adminId = req.auth!.user.id;
@@ -249,16 +252,10 @@ adminRouter.post('/messages/conversations/:id/messages', requireAdmin, async (re
     createdAt: Date;
     updatedAt: Date;
   };
-  if (!conversation) return next(notFound('Conversation not found'));
-
-  // Admins can reply in any conversation; join it first so the thread also
-  // shows up in the admin's own inbox and the reply has a valid sender.
-  const isParticipant = conversation.participants.some((p) => p.id === adminId);
-  if (!isParticipant) {
-    await prisma.conversation.update({
-      where: { id: conversationId },
-      data: { participants: { connect: { id: adminId } } },
-    });
+  // Admins may only reply in their own conversations; other admins' threads
+  // are reported as not found so their existence isn't leaked.
+  if (!conversation || !conversation.participants.some((p) => p.id === adminId)) {
+    return next(notFound('Conversation not found'));
   }
 
   const message = await prisma.message.create({
