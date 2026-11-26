@@ -152,6 +152,18 @@ function WayVisual({ kind }) {
   );
 }
 
+// FAQPage structured data for answer engines; rendered by <Seo> in _app.js.
+HomePage.jsonLd = [
+  {
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  },
+];
+
 export default function HomePage() {
   const router = useRouter();
   const [models, setModels] = useState([]);

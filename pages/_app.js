@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { api } from '../lib/api.js';
 import { isPublicPath } from '../lib/authGate.js';
+import Seo from '../components/Seo.js';
 
 function GateSpinner() {
   return (
@@ -47,7 +48,12 @@ export default function MyApp({ Component, pageProps }) {
     return () => { cancelled = true; };
   }, [needsGate, router.pathname, router.asPath, router]);
 
-  if (needsGate && authed !== true) return <GateSpinner />;
-
-  return <Component {...pageProps} />;
+  // <Seo> renders even while the gate spinner shows, so every page's static
+  // HTML carries its title/description/robots tags.
+  return (
+    <>
+      <Seo jsonLd={Component.jsonLd} />
+      {needsGate && authed !== true ? <GateSpinner /> : <Component {...pageProps} />}
+    </>
+  );
 }

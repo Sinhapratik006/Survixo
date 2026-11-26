@@ -1,0 +1,37 @@
+# ApiTradeX — AI crawlers and search engines are welcome on public pages.
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /v1/
+Disallow: /app/
+Disallow: /admin/
+Disallow: /buyer/
+Disallow: /seller/
+Disallow: /dashboard
+Disallow: /messages
+Disallow: /profile
+Disallow: /login
+Disallow: /signup
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://www.apitradex.com/sitemap.xml

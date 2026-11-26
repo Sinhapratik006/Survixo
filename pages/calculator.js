@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
+import PageAbout from '../components/PageAbout';
 import Footer from '../components/Footer';
 import Button from '../components/Button';
 import Card from '../components/Card';
@@ -7,6 +8,25 @@ import Input from '../components/Input';
 import { cn } from '../components/lib/cn.js';
 import { DollarSign, BarChart3, Layers, TrendingUp, Copy, ArrowRight } from 'lucide-react';
 import { api, formatUsd } from '../lib/api.js';
+
+const CALCULATOR_ABOUT = {
+  "title": "How the savings calculator works",
+  "intro": "The calculator estimates what your current AI API bill would cost if the same tokens were served through the best seller offer on ApiTradeX. Pick a model, enter what you spend per month at list price, and it shows the equivalent token volume, your new monthly bill and the difference.",
+  "items": [
+    {
+      "q": "How is the estimate calculated?",
+      "a": "Your monthly spend is divided by the provider’s list output price to estimate the tokens you use, then multiplied by the cheapest live seller price for the same model. The difference is your estimated monthly saving."
+    },
+    {
+      "q": "Is the saving guaranteed?",
+      "a": "No. Seller prices are live and change over time, and real bills depend on your input-to-output token ratio. Treat the figure as an estimate based on current offers."
+    },
+    {
+      "q": "Do I need to change my code to get these prices?",
+      "a": "No. ApiTradeX is OpenAI-compatible: change the base URL and API key in your existing SDK and keep the rest of your integration as it is."
+    }
+  ]
+};
 
 export default function CalculatorPage() {
   const [models, setModels] = useState([]);
@@ -51,7 +71,8 @@ export default function CalculatorPage() {
     return (
       <div className="min-h-screen bg-canvas dark:bg-navy-950">
         <Navbar />
-        <section className="py-16"><div className="container-page"><h1 className="text-h1 text-slate-900 dark:text-white">Cost Calculator</h1><p className="text-slate-500 dark:text-slate-400">Loading…</p></div></section>
+        <section className="py-16"><div className="container-page"><h1 className="text-h1 text-slate-900 dark:text-white">Savings calculator</h1><p className="text-slate-600 dark:text-slate-300">Pick a model, set your monthly spend, see the difference.</p><p className="text-slate-500 dark:text-slate-400">Loading live prices…</p></div></section>
+        <PageAbout {...CALCULATOR_ABOUT} />
         <Footer />
       </div>
     );
@@ -232,6 +253,7 @@ export default function CalculatorPage() {
         </div>
       </section>
 
+      <PageAbout {...CALCULATOR_ABOUT} />
       <Footer />
     </div>
   );

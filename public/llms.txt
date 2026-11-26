@@ -1,0 +1,22 @@
+# ApiTradeX
+
+> ApiTradeX is a two-sided AI inference marketplace. Developers call 50+ AI models (GPT, Claude, Gemini, Llama, DeepSeek, Mistral, Qwen and more) through one OpenAI-compatible API, and each request is routed to the cheapest healthy seller offer. Independent sellers list inference capacity at their own per-million-token prices and get paid out.
+
+Key facts:
+- OpenAI-compatible: point any OpenAI SDK at the ApiTradeX base URL and use an ApiTradeX API key; chat completions, streaming and tool calls work as-is.
+- Routing: the router picks the cheapest seller that passes health checks and meets the latency budget; a failing seller is skipped and failed attempts are never billed.
+- Billing: prepaid balance, debited per token, with optional hard spend caps per API key.
+- Sellers: anyone with an account can create a listing, set input and output prices per million tokens, and request payouts.
+
+## Pages
+
+- [Home](https://www.apitradex.com/): Overview of the API, the marketplace and selling inference, plus FAQ.
+- [Models and prices](https://www.apitradex.com/models): Every available model with the cheapest live offer and the discount versus provider list price.
+- [Credit marketplace](https://www.apitradex.com/marketplace): Prepaid API credit bundles listed by sellers.
+- [Savings calculator](https://www.apitradex.com/calculator): Estimate monthly savings versus list price for a chosen model.
+- [Market analytics](https://www.apitradex.com/analytics): Aggregate request volume, tokens, realized prices and average savings.
+- [Documentation](https://www.apitradex.com/docs): Quickstart, authentication, routing policies, budget guards, error codes and the seller guide.
+
+## Optional
+
+- [Terms and privacy](https://www.apitradex.com/legal)

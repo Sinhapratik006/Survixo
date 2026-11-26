@@ -2,8 +2,6 @@ node_modules/
 dist/
 server/dist/
 .local/
-.env
-.env.local
 .env.*.local
 .env.backup-*
 .env.*.backup*
@@ -20,3 +18,4 @@ out/
 
 # TypeScript incremental build info (per-machine cache)
 *.tsbuildinfo
+config.bat

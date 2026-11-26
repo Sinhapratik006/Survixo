@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '../components/Navbar';
+import PageAbout from '../components/PageAbout';
 import Footer from '../components/Footer';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -17,6 +18,29 @@ const sortLabels = {
   context: 'Largest context',
   name: 'A to Z',
   discount: 'Biggest discount',
+};
+
+const MODELS_ABOUT = {
+  "title": "How model pricing works on ApiTradeX",
+  "intro": "This page lists every AI model available through the ApiTradeX API, together with the cheapest live offer from independent sellers. Prices are shown per million tokens, separately for input and output, next to the provider’s official list price so you can see the discount at a glance.",
+  "items": [
+    {
+      "q": "Where do the prices come from?",
+      "a": "Each model can have several seller offers. Sellers set their own input and output price per million tokens; the price shown is the lowest offer that is currently passing health checks."
+    },
+    {
+      "q": "What does the discount compare against?",
+      "a": "The discount is measured against the model provider’s published list price, using a blended rate of 75% input and 25% output tokens."
+    },
+    {
+      "q": "How do I use a model listed here?",
+      "a": "Create an API key, point any OpenAI-compatible SDK at the ApiTradeX base URL and pass the model id. Requests are routed to the cheapest healthy offer, and failed attempts are retried on the next seller without being billed."
+    },
+    {
+      "q": "Which filters are available?",
+      "a": "You can filter by provider, minimum context window, maximum price, capability (chat, vision, tools, streaming, JSON mode) and availability, and sort by price, latency, popularity, quality, context length or discount."
+    }
+  ]
 };
 
 export default function ModelsPage() {
@@ -268,6 +292,7 @@ export default function ModelsPage() {
         </div>
       </section>
 
+      <PageAbout {...MODELS_ABOUT} />
       <Footer />
     </div>
   );

@@ -2,10 +2,30 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Navbar from '../components/Navbar';
+import PageAbout from '../components/PageAbout';
 import Footer from '../components/Footer';
 import Button from '../components/Button';
 import { cn } from '../components/lib/cn.js';
 import { api, formatUsd } from '../lib/api.js';
+
+const MARKETPLACE_ABOUT = {
+  "title": "About the API credit marketplace",
+  "intro": "The ApiTradeX marketplace lets sellers list prepaid API credit bundles for AI inference, usually below the face value of the credits. Buyers pay once and spend the credits through the same OpenAI-compatible API used for every model on the platform.",
+  "items": [
+    {
+      "q": "What is a listing?",
+      "a": "A listing is a bundle of inference credits offered by a seller at a fixed price. Each listing shows the price you pay, the credit value you receive and the seller who offers it."
+    },
+    {
+      "q": "Who can sell credits?",
+      "a": "Any verified ApiTradeX account can become a seller from the seller dashboard, create a listing, set its price and request payouts once it has earnings."
+    },
+    {
+      "q": "How are purchases protected?",
+      "a": "Purchases are settled through the platform ledger, so credits are only released to the buyer’s balance once payment clears, and sellers are paid out from completed orders."
+    }
+  ]
+};
 
 export default function MarketplacePage() {
   const router = useRouter();
@@ -44,6 +64,12 @@ export default function MarketplacePage() {
 
       <div className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-6">
+            <h1 className="text-h1 text-slate-900 dark:text-white mb-1">API credit marketplace</h1>
+            <p className="text-slate-600 dark:text-slate-300">
+              Buy discounted AI inference credits from verified sellers and spend them through one OpenAI-compatible API.
+            </p>
+          </div>
           <div className="bg-white dark:bg-navy-800/50 rounded-xl p-6 mb-8 shadow-sm">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
@@ -182,6 +208,9 @@ export default function MarketplacePage() {
           </div>
         </div>
       </div>
+
+      <PageAbout {...MARKETPLACE_ABOUT} />
+      <Footer />
     </div>
   );
 }

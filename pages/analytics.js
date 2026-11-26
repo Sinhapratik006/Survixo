@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
+import PageAbout from '../components/PageAbout';
 import Footer from '../components/Footer';
 import Card from '../components/Card';
 import Button from '../components/Button';
@@ -8,6 +9,25 @@ import {
 } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { api, formatUsd, formatTokens, formatPct } from '../lib/api.js';
+
+const ANALYTICS_ABOUT = {
+  "title": "About these market statistics",
+  "intro": "Market analytics summarise activity across the whole ApiTradeX marketplace over the selected window of 7, 28 or 90 days. The figures are aggregates of all traffic and never expose individual buyers, sellers or requests.",
+  "items": [
+    {
+      "q": "What is measured?",
+      "a": "Total requests, tokens served, spend, realized prices per model and the average saving compared with provider list prices, plus daily request volume and recent marketplace activity."
+    },
+    {
+      "q": "How is the saving calculated?",
+      "a": "For each request, the price actually paid is compared with what the same tokens would cost at the model provider’s published list price, then averaged across the selected period."
+    },
+    {
+      "q": "How fresh is the data?",
+      "a": "The statistics are computed from the live usage ledger each time the page loads, so they reflect requests settled up to that moment."
+    }
+  ]
+};
 
 export default function AnalyticsPage() {
   const [days, setDays] = useState(30);
@@ -36,6 +56,7 @@ export default function AnalyticsPage() {
       <div className="min-h-screen bg-canvas dark:bg-navy-950">
         <Navbar />
         <section className="py-10"><div className="container-page"><h1 className="text-h1 text-slate-900 dark:text-white">Market analytics</h1><p className="text-slate-500 dark:text-slate-400">Loading…</p></div></section>
+        <PageAbout {...ANALYTICS_ABOUT} />
         <Footer />
       </div>
     );
@@ -120,6 +141,7 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
+      <PageAbout {...ANALYTICS_ABOUT} />
       <Footer />
     </div>
   );

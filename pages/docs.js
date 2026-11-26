@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Navbar from '../components/Navbar';
+import PageAbout from '../components/PageAbout';
 import Footer from '../components/Footer';
 import Card from '../components/Card';
 import Button from '../components/Button';
@@ -54,6 +55,17 @@ const sections = [
   },
 ];
 
+const DOCS_ABOUT = {
+  title: 'ApiTradeX API at a glance',
+  intro: 'The ApiTradeX API is OpenAI-compatible. If your code already uses an OpenAI SDK, you only change the base URL and the API key; request and response formats for chat completions, streaming and tool calls stay the same.',
+  items: [
+    { q: 'What is the base URL?', a: 'Send requests to the /v1 path on apitradex.com, for example POST /v1/chat/completions, with your ApiTradeX key in the Authorization: Bearer header.' },
+    { q: 'How do I choose a model?', a: 'Pass any model id from the Models page in the model field. ApiTradeX routes the request to the cheapest seller offer for that model that is healthy and meets your latency budget.' },
+    { q: 'What happens if a seller fails?', a: 'The router retries the next eligible offer automatically. Failed attempts are never charged; you pay only for the tokens of the request that succeeds.' },
+    { q: 'How do I control spend?', a: 'Every API key can have a hard spend cap and alerts. Usage is debited per token from a prepaid balance, and the Usage page shows tokens, latency and cost per request.' },
+  ],
+};
+
 export default function DocsPage() {
   return (
     <div className="min-h-screen bg-canvas dark:bg-navy-950">
@@ -89,7 +101,7 @@ export default function DocsPage() {
                 <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-navy-800/30 flex items-center justify-center text-slate-600 dark:text-slate-300 mb-5 group-hover:bg-brand-50 dark:group-hover:bg-brand-900/20 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
                   <s.icon className="w-5 h-5" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">{s.title}</h3>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-3">{s.title}</h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
                   {s.desc}
                 </p>
@@ -107,9 +119,9 @@ export default function DocsPage() {
             <div className="glass rounded-3xl p-8 md:p-12 border border-white/30 dark:border-navy-700/30">
               <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
                     Need help integrating?
-                  </h3>
+                  </h2>
                   <p className="text-sm text-slate-600 dark:text-slate-300">
                     Join our Discord or email support for priority assistance.
                   </p>
@@ -123,6 +135,7 @@ export default function DocsPage() {
         </div>
       </section>
 
+      <PageAbout {...DOCS_ABOUT} />
       <Footer />
     </div>
   );
